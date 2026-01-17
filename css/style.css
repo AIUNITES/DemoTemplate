@@ -1577,3 +1577,10 @@ h4 { font-size: 1rem; }
 .legal-content li {
   margin-bottom: 0.5rem;
 }
+
+/* ==================== FLOATING FEATURE REQUEST BUTTON ==================== */
+.feature-request-btn { position: fixed; bottom: 24px; right: 24px; display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border-radius: 50px; font-weight: 600; font-size: 0.9rem; text-decoration: none; box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4); transition: all 0.3s ease; z-index: 1000; }
+.feature-request-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 30px rgba(139, 92, 246, 0.5); }
+.feature-btn-icon { font-size: 1.1rem; }
+.feature-btn-text { white-space: nowrap; }
+@media (max-width: 600px) { .feature-request-btn { padding: 0.6rem 1rem; font-size: 0.8rem; bottom: 16px; right: 16px; } }
