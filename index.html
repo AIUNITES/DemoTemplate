@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{APP_NAME}} - {{APP_TAGLINE}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>{{APP_ICON}}</text></svg>">
+</head>
+<body>
+  <div id="app">
+    <!-- Landing Page -->
+    <div id="landing-screen" class="screen active">
+      <nav class="landing-nav">
+        <div class="logo">{{APP_LOGO_HTML}}</div>
+        <button class="btn-primary" id="landing-login-btn">Log In</button>
+      </nav>
+
+      <section class="landing-hero">
+        <div class="hero-content">
+          <div class="hero-slogan">{{APP_TAGLINE}}</div>
+          <h1>{{APP_HEADLINE}}</h1>
+          <p class="hero-subtitle">{{APP_DESCRIPTION}}</p>
+          <div class="hero-cta">
+            <div class="btn-row">
+              <button class="btn-primary btn-large" id="landing-start-btn">Get Started Free</button>
+              <button class="btn-secondary btn-large" id="landing-demo-btn">👁️ Try Demo</button>
+            </div>
+            <span class="hero-note">No credit card required</span>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-cards" id="hero-cards"></div>
+        </div>
+      </section>
+
+      <section class="landing-features">
+        <h2>How It Works</h2>
+        <div class="features-grid" id="features-grid"></div>
+      </section>
+
+      <section class="landing-items">
+        <h2 id="items-section-title">Featured Content</h2>
+        <p class="section-subtitle" id="items-section-subtitle">Explore what's available</p>
+        <div class="items-grid" id="landing-items-grid"></div>
+      </section>
+
+      <section class="landing-cta">
+        <h2>{{APP_CTA_HEADLINE}}</h2>
+        <p>{{APP_CTA_DESCRIPTION}}</p>
+        <button class="btn-primary btn-large" id="landing-start-btn-2">Get Started Free</button>
+      </section>
+
+      <footer class="landing-footer">
+        <div class="logo">{{APP_LOGO_HTML}}</div>
+        <p class="footer-slogan">{{APP_TAGLINE}}</p>
+        <p>© 2026 {{APP_NAME}}. All rights reserved.</p>
+        <p class="footer-links">
+          <a href="#" id="footer-terms">Terms of Service</a>
+          <span>•</span>
+          <a href="#" id="footer-privacy">Privacy Policy</a>
+        </p>
+        <span class="version-number">v1.0.0</span>
+      </footer>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="screen">
+      <div class="auth-container">
+        <div class="auth-header">
+          <a href="#" id="back-to-landing" class="back-to-landing">← Back</a>
+          <div class="logo">{{APP_LOGO_HTML}}</div>
+          <p class="auth-tagline">{{APP_TAGLINE}}</p>
+        </div>
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Log In</button>
+          <button class="auth-tab" data-tab="signup">Sign Up</button>
+        </div>
+        <form id="login-form" class="auth-form active">
+          <div class="form-group">
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" placeholder="Enter username" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Enter password" required>
+          </div>
+          <div class="form-error" id="login-error"></div>
+          <button type="submit" class="btn-primary full-width">Log In</button>
+        </form>
+        <form id="signup-form" class="auth-form">
+          <div class="form-group">
+            <label for="signup-name">Display Name</label>
+            <input type="text" id="signup-name" placeholder="Your name" required>
+          </div>
+          <div class="form-group">
+            <label for="signup-username">Username</label>
+            <input type="text" id="signup-username" placeholder="Choose a username" required>
+          </div>
+          <div class="form-group">
+            <label for="signup-email">Email <span class="optional">(optional)</span></label>
+            <input type="email" id="signup-email" placeholder="your@email.com">
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Password</label>
+            <input type="password" id="signup-password" placeholder="Min 6 characters" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="signup-confirm">Confirm Password</label>
+            <input type="password" id="signup-confirm" placeholder="Confirm password" required>
+          </div>
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="signup-agree" required>
+              <span>I agree to the <a href="#" id="show-terms">Terms of Service</a> and <a href="#" id="show-privacy">Privacy Policy</a></span>
+            </label>
+          </div>
+          <div class="form-error" id="signup-error"></div>
+          <button type="submit" class="btn-primary full-width">Create Account</button>
+        </form>
+        <div class="auth-footer">
+          <button class="btn-secondary full-width" id="auth-demo-btn" style="margin-bottom: 1rem;">👁️ Try Demo Instead</button>
+          <p>By continuing, you agree to our Terms of Service</p>
+          <a href="#" id="reset-app-link" class="reset-link">🔄 Reset App to Defaults</a>
+          <span class="version-number">v1.0.0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboard-screen" class="screen">
+      <nav class="app-nav">
+        <div class="nav-left"><div class="logo">{{APP_LOGO_HTML}}</div></div>
+        <div class="nav-center">
+          <button class="nav-tab active" data-view="my-items">My Items</button>
+          <button class="nav-tab" data-view="discover">Discover</button>
+          <button class="nav-tab" data-view="favorites">Favorites</button>
+        </div>
+        <div class="nav-right">
+          <div class="user-menu">
+            <span class="user-name" id="user-display-name">User</span>
+            <div class="user-avatar" id="user-avatar">U</div>
+            <div class="user-dropdown" id="user-dropdown">
+              <a href="#" id="admin-link" class="admin-only" style="display:none;">🛡️ Admin Panel</a>
+              <a href="#" id="settings-link">⚙️ Settings</a>
+              <a href="#" id="logout-link">🚪 Log Out</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <main class="dashboard-main">
+        <div id="my-items-view" class="dashboard-view active">
+          <div class="view-header">
+            <div>
+              <h1 id="my-items-title">My Items</h1>
+              <p class="view-subtitle" id="my-items-subtitle">Manage your content</p>
+            </div>
+            <button class="btn-primary" id="new-item-btn"><span>✨</span> <span id="new-item-btn-text">New Item</span></button>
+          </div>
+          <div class="stats-row" id="user-stats"></div>
+          <div class="items-grid" id="items-grid"></div>
+          <div class="empty-state" id="empty-items">
+            <div class="empty-icon" id="empty-icon">📦</div>
+            <h3 id="empty-title">No items yet</h3>
+            <p id="empty-description">Create your first item to get started</p>
+            <button class="btn-primary" id="empty-new-item-btn"><span>✨</span> <span id="empty-new-item-btn-text">Create First Item</span></button>
+          </div>
+        </div>
+        <div id="discover-view" class="dashboard-view">
+          <div class="view-header"><div><h1>Discover</h1><p class="view-subtitle">Explore popular items from the community</p></div></div>
+          <div class="discover-grid" id="discover-grid"></div>
+        </div>
+        <div id="favorites-view" class="dashboard-view">
+          <div class="view-header"><div><h1>Favorites</h1><p class="view-subtitle">Your saved items</p></div></div>
+          <div class="favorites-content" id="favorites-content">
+            <div class="empty-state active"><div class="empty-icon">⭐</div><h3>No favorites yet</h3><p>Save items you love for quick access</p></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Item Detail Modal -->
+    <div id="item-modal" class="modal">
+      <div class="modal-content modal-large">
+        <div class="modal-header"><h2 id="item-modal-title">Item Details</h2><button class="modal-close" id="close-item-modal">×</button></div>
+        <div class="modal-body" id="item-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="create-modal" class="modal">
+      <div class="modal-content modal-large">
+        <div class="modal-header"><h2 id="create-modal-title">Create New</h2><button class="modal-close" id="close-create-modal">×</button></div>
+        <div class="modal-body"><form id="create-form"></form></div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header"><h2>Settings</h2><button class="modal-close" id="close-settings-modal">×</button></div>
+        <div class="modal-body">
+          <form id="user-settings-form">
+            <div class="form-group"><label>Display Name</label><input type="text" id="settings-name"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="settings-email"></div>
+            <div class="form-actions"><button type="button" class="btn-secondary" id="cancel-settings">Cancel</button><button type="submit" class="btn-primary">Save Settings</button></div>
+          </form>
+          <div class="settings-divider"></div>
+          <div class="backup-section">
+            <h4>💾 Backup & Restore</h4>
+            <p class="backup-warning">Your data is stored locally in your browser. Back up regularly!</p>
+            <div class="backup-buttons">
+              <button type="button" class="btn-secondary" id="backup-data-btn">📥 Download Backup</button>
+              <label class="btn-secondary restore-btn">📤 Restore from Backup<input type="file" id="restore-data-input" accept=".json" hidden></label>
+            </div>
+          </div>
+          <div class="settings-divider"></div>
+          <div class="cache-section">
+            <h4>🗄️ View My Cache</h4>
+            <p class="cache-info">See what's stored in your browser</p>
+            <button type="button" class="btn-secondary full-width" id="view-cache-btn">👁️ View Cached Data</button>
+          </div>
+          <div class="settings-divider"></div>
+          <div class="legal-section">
+            <h4>📜 Legal</h4>
+            <div class="legal-links">
+              <a href="#" id="settings-terms">Terms of Service</a>
+              <a href="#" id="settings-privacy">Privacy Policy</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache Viewer Modal -->
+    <div id="cache-modal" class="modal">
+      <div class="modal-content modal-large">
+        <div class="modal-header"><h2>🗄️ My Cached Data</h2><button class="modal-close" id="close-cache-modal">×</button></div>
+        <div class="modal-body">
+          <div class="cache-tabs">
+            <button class="cache-tab active" data-cache-tab="summary">Summary</button>
+            <button class="cache-tab" data-cache-tab="items">My Items</button>
+            <button class="cache-tab" data-cache-tab="raw">Raw Data</button>
+          </div>
+          <div id="cache-summary-tab" class="cache-tab-content active"><div class="cache-summary-grid" id="cache-summary-grid"></div></div>
+          <div id="cache-items-tab" class="cache-tab-content"><div class="cache-list" id="cache-items-list"></div></div>
+          <div id="cache-raw-tab" class="cache-tab-content"><pre class="cache-raw-view" id="cache-raw-view"></pre></div>
+          <div class="cache-footer"><span class="cache-size" id="cache-size">Total size: 0 KB</span><button type="button" class="btn-secondary danger" id="clear-my-cache-btn">🗑️ Clear My Data Only</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="admin-modal" class="modal">
+      <div class="modal-content modal-large">
+        <div class="modal-header">
+          <h2>🛡️ Admin Panel</h2>
+          <button class="modal-close" id="close-admin-modal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="admin-tabs">
+            <button class="admin-tab active" data-admin-tab="settings">System Settings</button>
+            <button class="admin-tab" data-admin-tab="users">Users</button>
+            <button class="admin-tab" data-admin-tab="stats">Statistics</button>
+            <button class="admin-tab" data-admin-tab="changelog">Changelog</button>
+          </div>
+
+          <!-- System Settings Tab -->
+          <div id="admin-settings-tab" class="admin-tab-content active">
+            <form id="system-settings-form">
+              <div class="settings-section">
+                <h4>Registration Settings</h4>
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <label>Require Email Verification</label>
+                    <span class="setting-desc">Users must verify email before logging in</span>
+                  </div>
+                  <label class="toggle">
+                    <input type="checkbox" id="setting-email-verification">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <label>Allow Public Signup</label>
+                    <span class="setting-desc">Anyone can create an account</span>
+                  </div>
+                  <label class="toggle">
+                    <input type="checkbox" id="setting-public-signup" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h4>Limits</h4>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Max Items per User</label>
+                    <input type="number" id="setting-max-items" value="100" min="1" max="1000">
+                  </div>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h4>Features</h4>
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <label>Maintenance Mode</label>
+                    <span class="setting-desc">Only admins can access the app</span>
+                  </div>
+                  <label class="toggle">
+                    <input type="checkbox" id="setting-maintenance">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">Save Settings</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Users Tab -->
+          <div id="admin-users-tab" class="admin-tab-content">
+            <div class="users-header">
+              <span id="users-count">0 users</span>
+            </div>
+            <div class="users-table" id="users-table"></div>
+          </div>
+
+          <!-- Statistics Tab -->
+          <div id="admin-stats-tab" class="admin-tab-content">
+            <div class="admin-stats-grid">
+              <div class="admin-stat-card">
+                <div class="admin-stat-value" id="admin-stat-users">0</div>
+                <div class="admin-stat-label">Total Users</div>
+              </div>
+              <div class="admin-stat-card">
+                <div class="admin-stat-value" id="admin-stat-items">0</div>
+                <div class="admin-stat-label">Total Items</div>
+              </div>
+            </div>
+            <div class="admin-version">
+              <span>App Version: v1.0.0</span>
+            </div>
+            <div class="admin-actions">
+              <button class="btn-secondary" id="export-all-data-btn">📤 Export All Data</button>
+              <button class="btn-secondary danger" id="reset-all-data-btn">🗑️ Reset All Data</button>
+            </div>
+          </div>
+
+          <!-- Changelog Tab -->
+          <div id="admin-changelog-tab" class="admin-tab-content">
+            <div class="changelog-content" id="changelog-content">
+              <!-- Populated by config -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legal Modal (Terms & Privacy) -->
+    <div id="legal-modal" class="modal">
+      <div class="modal-content modal-large">
+        <div class="modal-header">
+          <h2 id="legal-modal-title">Terms of Service</h2>
+          <button class="modal-close" id="close-legal-modal">×</button>
+        </div>
+        <div class="modal-body legal-body">
+          <!-- Terms Content -->
+          <div id="terms-content" class="legal-content">
+            <p class="legal-updated">Last updated: January 2026</p>
+            
+            <h3>1. Acceptance of Terms</h3>
+            <p>By accessing and using this application, you agree to be bound by these Terms of Service. If you do not agree, please do not use the service.</p>
+            
+            <h3>2. Description of Service</h3>
+            <p>This is a demonstration application provided "as is" for educational and demonstration purposes.</p>
+            
+            <h3>3. User Accounts</h3>
+            <p>You are responsible for maintaining the confidentiality of your account credentials. All data is stored locally in your browser and is your responsibility to back up.</p>
+            
+            <h3>4. User Content</h3>
+            <p>You retain ownership of content you create. By using the service, you grant permission to store and display your content within the application.</p>
+            
+            <h3>5. Acceptable Use</h3>
+            <p>You agree not to use this application to:</p>
+            <ul>
+              <li>Create or distribute harmful, illegal, or offensive content</li>
+              <li>Violate any applicable laws or regulations</li>
+              <li>Infringe on intellectual property rights of others</li>
+              <li>Attempt to gain unauthorized access to the system</li>
+            </ul>
+            
+            <h3>6. Data Storage</h3>
+            <p>All user data is stored locally in your browser's localStorage. We do not collect or store your data on external servers. Clearing your browser data will permanently delete your content.</p>
+            
+            <h3>7. Disclaimer of Warranties</h3>
+            <p>This application is provided "as is" without warranties of any kind. We do not guarantee the service will be uninterrupted, secure, or error-free.</p>
+            
+            <h3>8. Limitation of Liability</h3>
+            <p>The creators shall not be liable for any indirect, incidental, or consequential damages arising from your use of the service.</p>
+            
+            <h3>9. Changes to Terms</h3>
+            <p>We reserve the right to modify these terms at any time. Continued use of the service constitutes acceptance of updated terms.</p>
+          </div>
+          
+          <!-- Privacy Content -->
+          <div id="privacy-content" class="legal-content" style="display: none;">
+            <p class="legal-updated">Last updated: January 2026</p>
+            
+            <h3>1. Information We Collect</h3>
+            <p>This application collects minimal information:</p>
+            <ul>
+              <li><strong>Account Information:</strong> Username, display name, and optional email you provide during signup</li>
+              <li><strong>Content:</strong> Items and data you create</li>
+              <li><strong>Settings:</strong> Your preferences (stored locally only)</li>
+            </ul>
+            
+            <h3>2. How We Store Data</h3>
+            <p><strong>All data is stored locally in your browser's localStorage.</strong> We do not transmit or store your data on external servers. This means:</p>
+            <ul>
+              <li>Your data stays on your device</li>
+              <li>Clearing browser data deletes your content permanently</li>
+              <li>Data does not sync across devices or browsers</li>
+              <li>We cannot recover lost data</li>
+            </ul>
+            
+            <h3>3. Cookies</h3>
+            <p>This application uses localStorage for functionality. We do not use tracking cookies or analytics services.</p>
+            
+            <h3>4. Data Security</h3>
+            <p>Since data is stored locally:</p>
+            <ul>
+              <li>Security depends on your device and browser security</li>
+              <li>We recommend using the backup feature regularly</li>
+              <li>Do not share your device with untrusted users</li>
+            </ul>
+            
+            <h3>5. Your Rights</h3>
+            <p>You have full control over your data:</p>
+            <ul>
+              <li><strong>Access:</strong> View your data anytime via Settings → View Cache</li>
+              <li><strong>Export:</strong> Download your data via Settings → Backup</li>
+              <li><strong>Delete:</strong> Clear your data via Settings → Clear My Data</li>
+            </ul>
+            
+            <h3>6. Changes to Privacy Policy</h3>
+            <p>We may update this policy periodically. Changes will be reflected in the "Last updated" date.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay"><div class="loading-spinner"></div><p id="loading-message">Loading...</p></div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+  </div>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
