@@ -496,6 +496,147 @@
             </div>
           </div>
 
+          <!-- SQL Database Tab -->
+          <div id="admin-database-tab" class="admin-tab-content">
+            <!-- Database Location Section -->
+            <div class="db-location-section">
+              <div class="section-header">
+                <h4>🌐 Database Location</h4>
+                <span class="db-location-status" id="db-location-status">Browser</span>
+              </div>
+              <div class="db-location-grid">
+                <!-- Browser (localStorage) -->
+                <div class="db-location-card active" data-location="browser">
+                  <div class="db-loc-icon">💻</div>
+                  <div class="db-loc-info">
+                    <h5>Browser</h5>
+                    <p>Stored in localStorage. This device only.</p>
+                  </div>
+                  <span class="db-loc-badge">Active</span>
+                </div>
+
+                <!-- Local Server + Tunnel -->
+                <div class="db-location-card" data-location="localServer">
+                  <div class="db-loc-icon">🖥️</div>
+                  <div class="db-loc-info">
+                    <h5>Local Server</h5>
+                    <p>Your PC + Cloudflare Tunnel. Access anywhere.</p>
+                  </div>
+                  <button class="btn-tiny" onclick="SQLDatabase.configureLocation('localServer')">Configure</button>
+                </div>
+
+                <!-- GitHub Sync -->
+                <div class="db-location-card" data-location="githubSync">
+                  <div class="db-loc-icon">🐙</div>
+                  <div class="db-loc-info">
+                    <h5>GitHub Sync</h5>
+                    <p>Auto-sync .db file to GitHub. All sites access.</p>
+                  </div>
+                  <button class="btn-tiny" onclick="SQLDatabase.configureLocation('githubSync')">Configure</button>
+                </div>
+
+                <!-- Supabase -->
+                <div class="db-location-card" data-location="supabase">
+                  <div class="db-loc-icon">⚡</div>
+                  <div class="db-loc-info">
+                    <h5>Supabase</h5>
+                    <p>Cloud PostgreSQL. Real SQL, free tier.</p>
+                  </div>
+                  <button class="btn-tiny" onclick="SQLDatabase.configureLocation('supabase')">Configure</button>
+                </div>
+
+                <!-- Turso -->
+                <div class="db-location-card" data-location="turso">
+                  <div class="db-loc-icon">🚀</div>
+                  <div class="db-loc-info">
+                    <h5>Turso</h5>
+                    <p>Edge SQLite. Fast, free 9GB.</p>
+                  </div>
+                  <button class="btn-tiny" onclick="SQLDatabase.configureLocation('turso')">Configure</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="sql-header">
+              <div class="sql-status">
+                <span class="sql-status-icon" id="sql-status-icon">⚪</span>
+                <span id="sql-status-text">Database not loaded</span>
+              </div>
+              <div class="sql-actions">
+                <button class="btn-secondary" id="sql-new-db-btn">➕ New Database</button>
+                <label class="btn-secondary">
+                  📂 Load .db File
+                  <input type="file" id="sql-load-file" accept=".db,.sqlite,.sqlite3" hidden>
+                </label>
+                <button class="btn-secondary" id="sql-save-db-btn" disabled>💾 Save Database</button>
+              </div>
+            </div>
+
+            <div class="sql-workspace">
+              <!-- Tables Panel -->
+              <div class="sql-tables-panel">
+                <div class="panel-header">
+                  <h4>🗂️ Tables</h4>
+                  <button class="btn-small" id="sql-refresh-tables-btn" title="Refresh">🔄</button>
+                </div>
+                <div class="tables-list" id="sql-tables-list">
+                  <div class="empty-tables">No tables yet</div>
+                </div>
+                <button class="btn-secondary full-width" id="sql-create-table-btn">➕ Create Table</button>
+              </div>
+
+              <!-- Query Panel -->
+              <div class="sql-query-panel">
+                <div class="panel-header">
+                  <h4>📝 SQL Query</h4>
+                  <div class="query-actions">
+                    <select id="sql-examples-select">
+                      <option value="">Example Queries...</option>
+                      <option value="select">SELECT * FROM table</option>
+                      <option value="create">CREATE TABLE</option>
+                      <option value="insert">INSERT INTO</option>
+                      <option value="update">UPDATE</option>
+                      <option value="delete">DELETE FROM</option>
+                      <option value="drop">DROP TABLE</option>
+                    </select>
+                  </div>
+                </div>
+                <textarea id="sql-query-input" placeholder="Enter SQL query here...
+Examples:
+  SELECT * FROM users;
+  CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
+  INSERT INTO users (name, email) VALUES ('John', 'john@example.com');"></textarea>
+                <div class="query-buttons">
+                  <button class="btn-primary" id="sql-run-btn">▶️ Run Query</button>
+                  <button class="btn-secondary" id="sql-clear-btn">🗑️ Clear</button>
+                  <span class="query-time" id="sql-query-time"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="sql-results-panel">
+              <div class="panel-header">
+                <h4>📊 Results</h4>
+                <span class="results-count" id="sql-results-count"></span>
+              </div>
+              <div class="results-container" id="sql-results-container">
+                <div class="results-placeholder">Run a query to see results</div>
+              </div>
+            </div>
+
+            <!-- Query History -->
+            <div class="sql-history-panel">
+              <div class="panel-header">
+                <h4>📜 History</h4>
+                <button class="btn-small" id="sql-clear-history-btn" title="Clear History">🗑️</button>
+              </div>
+              <div class="history-list" id="sql-history-list">
+                <div class="empty-history">No queries yet</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Users Tab -->
           <div id="admin-users-tab" class="admin-tab-content">
             <div class="users-header">
@@ -753,6 +894,128 @@
       </div>
     </div>
 
+    <!-- Database Location Config Modal -->
+    <div id="db-location-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="db-location-modal-title">Configure Database Location</h2>
+          <button class="modal-close" id="close-db-location-modal">×</button>
+        </div>
+        <div class="modal-body">
+          <!-- Local Server Config -->
+          <div id="config-localServer" class="db-location-config-form" style="display:none;">
+            <p class="config-intro">Run a local server on your PC and expose it via Cloudflare Tunnel.</p>
+            
+            <div class="setup-steps">
+              <h5>🛠️ Setup Steps:</h5>
+              <ol>
+                <li>Download the server script (below)</li>
+                <li>Run: <code>node local-db-server.js</code></li>
+                <li>Install cloudflared: <code>npm install -g cloudflared</code></li>
+                <li>Run: <code>cloudflared tunnel --url http://localhost:3456</code></li>
+                <li>Copy the tunnel URL below</li>
+              </ol>
+            </div>
+
+            <div class="form-group">
+              <label>Server URL</label>
+              <input type="url" id="config-local-server-url" placeholder="https://random-name.trycloudflare.com">
+              <span class="form-hint">The Cloudflare Tunnel URL or localhost:3456</span>
+            </div>
+
+            <div class="download-scripts">
+              <button class="btn-secondary" id="download-server-script">💾 Download Server Script (Node.js)</button>
+              <button class="btn-secondary" id="download-server-py">🐍 Download Server Script (Python)</button>
+            </div>
+          </div>
+
+          <!-- GitHub Sync Config -->
+          <div id="config-githubSync" class="db-location-config-form" style="display:none;">
+            <p class="config-intro">Sync your SQLite database to a GitHub repository. All AIUNITES sites can access it.</p>
+            
+            <div class="form-group">
+              <label>Repository Owner</label>
+              <input type="text" id="config-gh-sync-owner" placeholder="AIUNITES">
+            </div>
+            <div class="form-group">
+              <label>Repository Name</label>
+              <input type="text" id="config-gh-sync-repo" placeholder="database-sync">
+            </div>
+            <div class="form-group">
+              <label>File Path</label>
+              <input type="text" id="config-gh-sync-path" placeholder="data/app.db" value="data/app.db">
+            </div>
+            <div class="form-group">
+              <label>GitHub Token</label>
+              <input type="password" id="config-gh-sync-token" placeholder="ghp_xxxxxxxxxxxx">
+              <span class="form-hint">Needs repo write access</span>
+            </div>
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="config-gh-sync-auto" checked>
+                <span>Auto-sync on changes</span>
+              </label>
+            </div>
+
+            <div class="download-scripts">
+              <button class="btn-secondary" id="download-watcher-ps">💾 Download File Watcher (PowerShell)</button>
+            </div>
+          </div>
+
+          <!-- Supabase Config -->
+          <div id="config-supabase" class="db-location-config-form" style="display:none;">
+            <p class="config-intro">Connect to Supabase for cloud PostgreSQL. Free tier: 500MB, 2 projects.</p>
+            
+            <div class="form-group">
+              <label>Project URL</label>
+              <input type="url" id="config-supabase-url" placeholder="https://xxxxx.supabase.co">
+            </div>
+            <div class="form-group">
+              <label>Anon Key</label>
+              <input type="password" id="config-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+              <span class="form-hint">Found in Project Settings → API</span>
+            </div>
+
+            <a href="https://supabase.com/dashboard" target="_blank" class="setup-guide-link">📖 Create Supabase Project</a>
+          </div>
+
+          <!-- Turso Config -->
+          <div id="config-turso" class="db-location-config-form" style="display:none;">
+            <p class="config-intro">Connect to Turso for edge SQLite. Free tier: 9GB, 500 databases.</p>
+            
+            <div class="form-group">
+              <label>Database URL</label>
+              <input type="url" id="config-turso-url" placeholder="libsql://your-db-name.turso.io">
+            </div>
+            <div class="form-group">
+              <label>Auth Token</label>
+              <input type="password" id="config-turso-token" placeholder="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9...">
+            </div>
+
+            <a href="https://turso.tech/app" target="_blank" class="setup-guide-link">📖 Create Turso Database</a>
+          </div>
+
+          <!-- Browser Info -->
+          <div id="config-browser" class="db-location-config-form" style="display:none;">
+            <p class="config-intro">Database stored in browser localStorage. Default option.</p>
+            <div class="localstorage-info">
+              <div class="info-item"><span class="info-icon">✓</span> No setup required</div>
+              <div class="info-item"><span class="info-icon">✓</span> Works offline</div>
+              <div class="info-item"><span class="info-icon">✓</span> Fast (local)</div>
+              <div class="info-item"><span class="info-icon">⚠</span> This device/browser only</div>
+              <div class="info-item"><span class="info-icon">⚠</span> Lost if browser data cleared</div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" id="test-db-location-btn">🔌 Test Connection</button>
+            <button type="button" class="btn-primary" id="save-db-location-btn">Save & Activate</button>
+          </div>
+          <div id="db-location-test-result" class="test-result"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay"><div class="loading-spinner"></div><p id="loading-message">Loading...</p></div>
 
@@ -765,10 +1028,14 @@
       <span class="feature-btn-text">Feedback</span>
     </a>
   </div>
+  <!-- sql.js - SQLite in the browser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+  
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/datasource.js"></script>
+  <script src="js/sql-database.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
