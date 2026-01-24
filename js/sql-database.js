@@ -642,9 +642,19 @@ while ($true) {
       this.loadFromFile(e.target.files[0]);
     });
     
-    // Save database
+    // Save database to file
     document.getElementById('sql-save-db-btn')?.addEventListener('click', () => {
       this.saveToFile();
+    });
+    
+    // Save database to GitHub
+    document.getElementById('sql-save-github-btn')?.addEventListener('click', () => {
+      this.saveToGitHub();
+    });
+    
+    // Load database from GitHub
+    document.getElementById('sql-load-github-btn')?.addEventListener('click', () => {
+      this.loadFromGitHub();
     });
     
     // Run query
@@ -756,11 +766,146 @@ while ($true) {
       
       URL.revokeObjectURL(url);
       
+      if (typeof showToast === 'function') {
+        showToast('💾 Database saved to file', 'success');
+      }
+      
       console.log('[SQLDatabase] Saved to file');
       
     } catch (error) {
       console.error('[SQLDatabase] Save error:', error);
       alert('Error saving database');
+    }
+  },
+  
+  /**
+   * Save database to GitHub repository
+   */
+  async saveToGitHub() {
+    if (!this.db) {
+      alert('No database to save');
+      return;
+    }
+    
+    const config = this.locationConfig.githubSync;
+    if (!config || !config.owner || !config.repo || !config.token) {
+      alert('Please configure GitHub Sync first (click Configure on GitHub Sync card)');
+      return;
+    }
+    
+    try {
+      // Export database to base64
+      const data = this.db.export();
+      const base64 = btoa(String.fromCharCode.apply(null, data));
+      
+      const path = config.path || 'data/app.db';
+      const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${path}`;
+      
+      // Check if file exists (to get SHA for update)
+      let sha = null;
+      try {
+        const existingResp = await fetch(apiUrl, {
+          headers: { 'Authorization': `token ${config.token}` }
+        });
+        if (existingResp.ok) {
+          const existing = await existingResp.json();
+          sha = existing.sha;
+        }
+      } catch (e) {
+        // File doesn't exist, that's ok
+      }
+      
+      // Create or update file
+      const body = {
+        message: `Update database [${new Date().toISOString()}]`,
+        content: base64,
+        branch: config.branch || 'main'
+      };
+      if (sha) body.sha = sha;
+      
+      const resp = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${config.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      
+      if (resp.ok) {
+        if (typeof showToast === 'function') {
+          showToast('🐙 Database saved to GitHub!', 'success');
+        }
+        console.log('[SQLDatabase] Saved to GitHub:', path);
+      } else {
+        const error = await resp.json();
+        throw new Error(error.message || 'GitHub API error');
+      }
+      
+    } catch (error) {
+      console.error('[SQLDatabase] GitHub save error:', error);
+      alert('Error saving to GitHub: ' + error.message);
+    }
+  },
+  
+  /**
+   * Load database from GitHub repository
+   */
+  async loadFromGitHub() {
+    const config = this.locationConfig.githubSync;
+    if (!config || !config.owner || !config.repo) {
+      alert('Please configure GitHub Sync first');
+      return;
+    }
+    
+    try {
+      const path = config.path || 'data/app.db';
+      const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${path}`;
+      
+      const headers = {};
+      if (config.token) {
+        headers['Authorization'] = `token ${config.token}`;
+      }
+      
+      const resp = await fetch(apiUrl, { headers });
+      
+      if (!resp.ok) {
+        if (resp.status === 404) {
+          alert('Database file not found on GitHub. Save one first!');
+        } else {
+          throw new Error(`GitHub API error: ${resp.status}`);
+        }
+        return;
+      }
+      
+      const data = await resp.json();
+      
+      // Decode base64 content
+      const binary = atob(data.content.replace(/\n/g, ''));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      
+      // Load into sql.js
+      this.db = new this.SQL.Database(bytes);
+      this.isLoaded = true;
+      
+      this.updateStatus('Loaded from GitHub', 'success');
+      this.refreshTables();
+      this.autoSave();
+      
+      document.getElementById('sql-save-db-btn').disabled = false;
+      
+      if (typeof showToast === 'function') {
+        showToast('🐙 Database loaded from GitHub!', 'success');
+      }
+      
+      console.log('[SQLDatabase] Loaded from GitHub:', path);
+      
+    } catch (error) {
+      console.error('[SQLDatabase] GitHub load error:', error);
+      alert('Error loading from GitHub: ' + error.message);
     }
   },
   

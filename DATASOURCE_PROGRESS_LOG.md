@@ -192,6 +192,49 @@ SELECT * FROM users;
 
 ---
 
+## Update: GitHub Save/Load for SQL Database Added
+
+**Date:** January 24, 2026
+
+### New Feature: Save/Load Database to GitHub
+
+Added ability to save and load SQLite databases directly to/from a GitHub repository.
+
+### Files Modified
+
+| File | Changes |
+|------|---------|  
+| `index.html` | Added "🐙 Save to GitHub" and "📥 Load from GitHub" buttons |
+| `js/sql-database.js` | Added `saveToGitHub()` and `loadFromGitHub()` methods (~130 lines) |
+
+### New Methods
+
+- `saveToGitHub()` - Export database as base64 and push to GitHub repo via API
+- `loadFromGitHub()` - Fetch database from GitHub repo and load into sql.js
+
+### How to Use
+
+1. Go to Admin Panel → 🗃️ SQL Database
+2. Click "Configure" on the **GitHub Sync** card
+3. Enter your GitHub credentials:
+   - Repository Owner (e.g., `AIUNITES`)
+   - Repository Name (e.g., `database-sync`)
+   - File Path (e.g., `data/app.db`)
+   - GitHub Token (needs repo write access)
+4. Click "Save & Activate"
+5. Now you can:
+   - **🐙 Save to GitHub** - Push current database to repo
+   - **📥 Load from GitHub** - Pull database from repo
+
+### Benefits
+
+- All 17 AIUNITES sites can share the same database
+- Version control for your database
+- No need for external server
+- Free with GitHub
+
+---
+
 *Log updated: January 24, 2026*
 
 ---
