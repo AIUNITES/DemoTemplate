@@ -6,6 +6,7 @@
  * - Run SQL queries
  * - Import/export .db files
  * - Auto-save to localStorage or IndexedDB
+ * - Multiple backend locations (browser, local server, GitHub, Supabase, Turso)
  */
 
 const SQLDatabase = {
@@ -14,9 +15,23 @@ const SQLDatabase = {
   SQL: null,
   history: [],
   
-  // Storage key for auto-save
+  // Storage keys
   STORAGE_KEY: 'demotemplate_sqldb',
   HISTORY_KEY: 'demotemplate_sql_history',
+  LOCATION_KEY: 'demotemplate_db_location',
+  
+  // Current location config
+  location: 'browser',
+  locationConfig: {},
+  
+  // Database location types
+  LOCATIONS: {
+    browser: { name: 'Browser', icon: '💻', requiresConfig: false },
+    localServer: { name: 'Local Server', icon: '🖥️', requiresConfig: true },
+    githubSync: { name: 'GitHub Sync', icon: '🐙', requiresConfig: true },
+    supabase: { name: 'Supabase', icon: '⚡', requiresConfig: true },
+    turso: { name: 'Turso', icon: '🚀', requiresConfig: true }
+  },
   
   /**
    * Initialize sql.js and load saved database
@@ -30,6 +45,9 @@ const SQLDatabase = {
       
       console.log('[SQLDatabase] sql.js loaded successfully');
       
+      // Load location config
+      this.loadLocationConfig();
+      
       // Try to load saved database
       await this.loadFromStorage();
       
@@ -42,6 +60,7 @@ const SQLDatabase = {
       // Update UI
       this.updateStatus();
       this.refreshTables();
+      this.updateLocationUI();
       
     } catch (error) {
       console.error('[SQLDatabase] Failed to initialize:', error);
@@ -50,9 +69,569 @@ const SQLDatabase = {
   },
   
   /**
+   * Load location configuration
+   */
+  loadLocationConfig() {
+    try {
+      const saved = localStorage.getItem(this.LOCATION_KEY);
+      if (saved) {
+        const config = JSON.parse(saved);
+        this.location = config.location || 'browser';
+        this.locationConfig = config.configs || {};
+      }
+    } catch (e) {
+      console.error('[SQLDatabase] Error loading location config:', e);
+    }
+  },
+  
+  /**
+   * Save location configuration
+   */
+  saveLocationConfig() {
+    const config = {
+      location: this.location,
+      configs: this.locationConfig,
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(this.LOCATION_KEY, JSON.stringify(config));
+  },
+  
+  /**
+   * Update location UI
+   */
+  updateLocationUI() {
+    // Update status badge
+    const statusEl = document.getElementById('db-location-status');
+    if (statusEl) {
+      const loc = this.LOCATIONS[this.location];
+      statusEl.textContent = loc ? `${loc.icon} ${loc.name}` : 'Browser';
+    }
+    
+    // Update card states
+    document.querySelectorAll('.db-location-card').forEach(card => {
+      const cardLoc = card.dataset.location;
+      if (cardLoc === this.location) {
+        card.classList.add('active');
+        const badge = card.querySelector('.db-loc-badge');
+        const btn = card.querySelector('.btn-tiny');
+        if (badge) badge.style.display = 'inline';
+        if (btn) btn.style.display = 'none';
+      } else {
+        card.classList.remove('active');
+        const badge = card.querySelector('.db-loc-badge');
+        const btn = card.querySelector('.btn-tiny');
+        if (badge) badge.style.display = 'none';
+        if (btn) btn.style.display = 'inline';
+      }
+    });
+  },
+  
+  /**
+   * Configure a database location
+   */
+  configureLocation(locationType) {
+    const modal = document.getElementById('db-location-modal');
+    const title = document.getElementById('db-location-modal-title');
+    
+    if (!modal) return;
+    
+    // Hide all config forms
+    document.querySelectorAll('.db-location-config-form').forEach(form => {
+      form.style.display = 'none';
+    });
+    
+    // Show the selected config form
+    const configForm = document.getElementById(`config-${locationType}`);
+    if (configForm) {
+      configForm.style.display = 'block';
+    }
+    
+    // Update title
+    const loc = this.LOCATIONS[locationType];
+    if (title && loc) {
+      title.textContent = `Configure ${loc.icon} ${loc.name}`;
+    }
+    
+    // Load saved config values
+    this.loadLocationFormValues(locationType);
+    
+    // Store current location being configured
+    this.configuringLocation = locationType;
+    
+    // Clear test result
+    const testResult = document.getElementById('db-location-test-result');
+    if (testResult) {
+      testResult.innerHTML = '';
+    }
+    
+    // Show modal
+    modal.classList.add('active');
+  },
+  
+  /**
+   * Close location config modal
+   */
+  closeLocationModal() {
+    const modal = document.getElementById('db-location-modal');
+    if (modal) {
+      modal.classList.remove('active');
+    }
+    this.configuringLocation = null;
+  },
+  
+  /**
+   * Load saved form values for a location
+   */
+  loadLocationFormValues(locationType) {
+    const config = this.locationConfig[locationType] || {};
+    
+    switch (locationType) {
+      case 'localServer':
+        const serverUrl = document.getElementById('config-local-server-url');
+        if (serverUrl) serverUrl.value = config.serverUrl || '';
+        break;
+        
+      case 'githubSync':
+        const ghOwner = document.getElementById('config-gh-sync-owner');
+        const ghRepo = document.getElementById('config-gh-sync-repo');
+        const ghPath = document.getElementById('config-gh-sync-path');
+        const ghToken = document.getElementById('config-gh-sync-token');
+        const ghAuto = document.getElementById('config-gh-sync-auto');
+        if (ghOwner) ghOwner.value = config.owner || '';
+        if (ghRepo) ghRepo.value = config.repo || '';
+        if (ghPath) ghPath.value = config.path || 'data/app.db';
+        if (ghToken) ghToken.value = config.token || '';
+        if (ghAuto) ghAuto.checked = config.autoSync !== false;
+        break;
+        
+      case 'supabase':
+        const sbUrl = document.getElementById('config-supabase-url');
+        const sbKey = document.getElementById('config-supabase-key');
+        if (sbUrl) sbUrl.value = config.url || '';
+        if (sbKey) sbKey.value = config.key || '';
+        break;
+        
+      case 'turso':
+        const tursoUrl = document.getElementById('config-turso-url');
+        const tursoToken = document.getElementById('config-turso-token');
+        if (tursoUrl) tursoUrl.value = config.url || '';
+        if (tursoToken) tursoToken.value = config.token || '';
+        break;
+    }
+  },
+  
+  /**
+   * Get form values for current location
+   */
+  getLocationFormValues() {
+    const locationType = this.configuringLocation;
+    let config = {};
+    
+    switch (locationType) {
+      case 'localServer':
+        config = {
+          serverUrl: document.getElementById('config-local-server-url')?.value.trim() || ''
+        };
+        break;
+        
+      case 'githubSync':
+        config = {
+          owner: document.getElementById('config-gh-sync-owner')?.value.trim() || '',
+          repo: document.getElementById('config-gh-sync-repo')?.value.trim() || '',
+          path: document.getElementById('config-gh-sync-path')?.value.trim() || 'data/app.db',
+          token: document.getElementById('config-gh-sync-token')?.value.trim() || '',
+          autoSync: document.getElementById('config-gh-sync-auto')?.checked !== false
+        };
+        break;
+        
+      case 'supabase':
+        config = {
+          url: document.getElementById('config-supabase-url')?.value.trim() || '',
+          key: document.getElementById('config-supabase-key')?.value.trim() || ''
+        };
+        break;
+        
+      case 'turso':
+        config = {
+          url: document.getElementById('config-turso-url')?.value.trim() || '',
+          token: document.getElementById('config-turso-token')?.value.trim() || ''
+        };
+        break;
+        
+      case 'browser':
+        config = { enabled: true };
+        break;
+    }
+    
+    return config;
+  },
+  
+  /**
+   * Test database location connection
+   */
+  async testLocationConnection() {
+    const locationType = this.configuringLocation;
+    const config = this.getLocationFormValues();
+    const resultEl = document.getElementById('db-location-test-result');
+    
+    if (!resultEl) return;
+    
+    resultEl.innerHTML = '<span class="testing">🔄 Testing connection...</span>';
+    resultEl.className = 'test-result';
+    
+    try {
+      let success = false;
+      let message = '';
+      
+      switch (locationType) {
+        case 'browser':
+          success = true;
+          message = 'localStorage is always available';
+          break;
+          
+        case 'localServer':
+          if (!config.serverUrl) throw new Error('Server URL is required');
+          const serverResp = await fetch(`${config.serverUrl}/health`, { method: 'GET' });
+          success = serverResp.ok;
+          message = success ? 'Connected to local server' : `Failed: ${serverResp.status}`;
+          break;
+          
+        case 'githubSync':
+          if (!config.owner || !config.repo) throw new Error('Owner and repo are required');
+          const ghResp = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}`, {
+            headers: config.token ? { 'Authorization': `token ${config.token}` } : {}
+          });
+          success = ghResp.ok;
+          message = success ? 'Connected to GitHub repository' : `Failed: ${ghResp.status}`;
+          break;
+          
+        case 'supabase':
+          if (!config.url || !config.key) throw new Error('URL and key are required');
+          const sbResp = await fetch(`${config.url}/rest/v1/`, {
+            headers: { 'apikey': config.key, 'Authorization': `Bearer ${config.key}` }
+          });
+          success = sbResp.ok || sbResp.status === 404; // 404 is ok, means connected but no tables
+          message = success ? 'Connected to Supabase' : `Failed: ${sbResp.status}`;
+          break;
+          
+        case 'turso':
+          if (!config.url) throw new Error('Database URL is required');
+          // Turso uses libsql protocol, we can only verify URL format for now
+          success = config.url.startsWith('libsql://') || config.url.startsWith('https://');
+          message = success ? 'Turso URL format valid' : 'Invalid URL format';
+          break;
+      }
+      
+      resultEl.innerHTML = success 
+        ? `<span class="success">✅ ${message}</span>`
+        : `<span class="error">❌ ${message}</span>`;
+      resultEl.className = `test-result ${success ? 'success' : 'error'}`;
+      
+    } catch (error) {
+      resultEl.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+      resultEl.className = 'test-result error';
+    }
+  },
+  
+  /**
+   * Save location config and activate
+   */
+  saveLocationAndActivate() {
+    const locationType = this.configuringLocation;
+    const config = this.getLocationFormValues();
+    
+    // Store config
+    this.locationConfig[locationType] = config;
+    
+    // Set as active location
+    this.location = locationType;
+    
+    // Save to localStorage
+    this.saveLocationConfig();
+    
+    // Update UI
+    this.updateLocationUI();
+    
+    // Close modal
+    this.closeLocationModal();
+    
+    // Show success toast
+    if (typeof showToast === 'function') {
+      const loc = this.LOCATIONS[locationType];
+      showToast(`${loc.icon} ${loc.name} is now active`, 'success');
+    }
+    
+    console.log('[SQLDatabase] Location activated:', locationType);
+  },
+  
+  /**
+   * Download server script
+   */
+  downloadServerScript(type) {
+    let content, filename;
+    
+    if (type === 'node') {
+      filename = 'local-db-server.js';
+      content = `// DemoTemplate Local Database Server (Node.js)
+// Run: node local-db-server.js
+// Then: cloudflared tunnel --url http://localhost:3456
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const PORT = 3456;
+const DB_PATH = path.join(__dirname, 'database.db');
+
+const server = http.createServer((req, res) => {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+  
+  // Health check
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
+    return;
+  }
+  
+  // Get database
+  if (req.method === 'GET' && req.url === '/db') {
+    if (fs.existsSync(DB_PATH)) {
+      const data = fs.readFileSync(DB_PATH);
+      res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+      res.end(data);
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Database not found' }));
+    }
+    return;
+  }
+  
+  // Save database
+  if (req.method === 'POST' && req.url === '/db') {
+    let body = [];
+    req.on('data', chunk => body.push(chunk));
+    req.on('end', () => {
+      const buffer = Buffer.concat(body);
+      fs.writeFileSync(DB_PATH, buffer);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, size: buffer.length }));
+    });
+    return;
+  }
+  
+  // Execute query
+  if (req.method === 'POST' && req.url === '/query') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      // Note: For real SQL execution, you'd need better-sqlite3 or similar
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: 'Query endpoint - implement with better-sqlite3' }));
+    });
+    return;
+  }
+  
+  res.writeHead(404);
+  res.end('Not Found');
+});
+
+server.listen(PORT, () => {
+  console.log(\`🗄️  Local DB Server running at http://localhost:\${PORT}\`);
+  console.log('\\nEndpoints:');
+  console.log('  GET  /health  - Health check');
+  console.log('  GET  /db      - Download database');
+  console.log('  POST /db      - Upload database');
+  console.log('\\nTo expose to internet:');
+  console.log('  cloudflared tunnel --url http://localhost:3456');
+});
+`;
+    } else {
+      filename = 'local_db_server.py';
+      content = `# DemoTemplate Local Database Server (Python)
+# Run: python local_db_server.py
+# Then: cloudflared tunnel --url http://localhost:3456
+
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
+import os
+
+PORT = 3456
+DB_PATH = 'database.db'
+
+class DBHandler(BaseHTTPRequestHandler):
+    def _cors_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+    
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self._cors_headers()
+        self.end_headers()
+    
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self._cors_headers()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'status': 'ok'}).encode())
+        elif self.path == '/db':
+            if os.path.exists(DB_PATH):
+                with open(DB_PATH, 'rb') as f:
+                    data = f.read()
+                self.send_response(200)
+                self._cors_headers()
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.end_headers()
+                self.wfile.write(data)
+            else:
+                self.send_response(404)
+                self._cors_headers()
+                self.end_headers()
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def do_POST(self):
+        if self.path == '/db':
+            length = int(self.headers.get('Content-Length', 0))
+            data = self.rfile.read(length)
+            with open(DB_PATH, 'wb') as f:
+                f.write(data)
+            self.send_response(200)
+            self._cors_headers()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'size': len(data)}).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+if __name__ == '__main__':
+    server = HTTPServer(('', PORT), DBHandler)
+    print(f'🗄️  Local DB Server running at http://localhost:{PORT}')
+    print('\\nEndpoints:')
+    print('  GET  /health  - Health check')
+    print('  GET  /db      - Download database')
+    print('  POST /db      - Upload database')
+    print('\\nTo expose to internet:')
+    print('  cloudflared tunnel --url http://localhost:3456')
+    server.serve_forever()
+`;
+    }
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  
+  /**
+   * Download file watcher script (PowerShell)
+   */
+  downloadWatcherScript() {
+    const content = `# DemoTemplate Database File Watcher (PowerShell)
+# Watches for changes to database.db and syncs to GitHub
+# Run: .\\db-watcher.ps1
+
+$DB_PATH = "database.db"
+$REPO_PATH = "."  # Your git repo path
+$CHECK_INTERVAL = 5  # Seconds between checks
+
+$lastHash = $null
+
+Write-Host "🔍 Database File Watcher Started" -ForegroundColor Cyan
+Write-Host "Watching: $DB_PATH"
+Write-Host "Press Ctrl+C to stop"
+Write-Host ""
+
+while ($true) {
+    if (Test-Path $DB_PATH) {
+        $currentHash = (Get-FileHash $DB_PATH -Algorithm MD5).Hash
+        
+        if ($lastHash -ne $null -and $currentHash -ne $lastHash) {
+            Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Change detected, syncing..." -ForegroundColor Yellow
+            
+            try {
+                Set-Location $REPO_PATH
+                git add $DB_PATH
+                git commit -m "Auto-sync database [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')]"
+                git push
+                Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Synced successfully!" -ForegroundColor Green
+            } catch {
+                Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sync failed: $_" -ForegroundColor Red
+            }
+        }
+        
+        $lastHash = $currentHash
+    }
+    
+    Start-Sleep -Seconds $CHECK_INTERVAL
+}
+`;
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'db-watcher.ps1';
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  
+  /**
    * Bind UI events
    */
   bindEvents() {
+    // Database Location Modal
+    document.getElementById('close-db-location-modal')?.addEventListener('click', () => {
+      this.closeLocationModal();
+    });
+    
+    document.getElementById('test-db-location-btn')?.addEventListener('click', () => {
+      this.testLocationConnection();
+    });
+    
+    document.getElementById('save-db-location-btn')?.addEventListener('click', () => {
+      this.saveLocationAndActivate();
+    });
+    
+    // Download script buttons
+    document.getElementById('download-server-script')?.addEventListener('click', () => {
+      this.downloadServerScript('node');
+    });
+    
+    document.getElementById('download-server-py')?.addEventListener('click', () => {
+      this.downloadServerScript('python');
+    });
+    
+    document.getElementById('download-watcher-ps')?.addEventListener('click', () => {
+      this.downloadWatcherScript();
+    });
+    
+    // Browser card click
+    document.querySelector('.db-location-card[data-location="browser"]')?.addEventListener('click', () => {
+      this.location = 'browser';
+      this.saveLocationConfig();
+      this.updateLocationUI();
+      if (typeof showToast === 'function') {
+        showToast('💻 Browser storage active', 'success');
+      }
+    });
+    
     // New Database
     document.getElementById('sql-new-db-btn')?.addEventListener('click', () => {
       this.createNewDatabase();
