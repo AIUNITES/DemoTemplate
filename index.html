@@ -316,6 +316,8 @@
         <div class="modal-body">
           <div class="admin-tabs">
             <button class="admin-tab active" data-admin-tab="settings">System Settings</button>
+            <button class="admin-tab" data-admin-tab="datasources">🗄️ Data Sources</button>
+            <button class="admin-tab" data-admin-tab="database">🗃️ SQL Database</button>
             <button class="admin-tab" data-admin-tab="users">Users</button>
             <button class="admin-tab" data-admin-tab="stats">Statistics</button>
             <button class="admin-tab" data-admin-tab="changelog">Changelog</button>
@@ -373,6 +375,125 @@
                 <button type="submit" class="btn-primary">Save Settings</button>
               </div>
             </form>
+          </div>
+
+          <!-- Data Sources Tab -->
+          <div id="admin-datasources-tab" class="admin-tab-content">
+            <div class="datasource-status">
+              <span class="status-label">Active Data Source:</span>
+              <span class="status-value" id="active-datasource">localStorage</span>
+              <span class="status-indicator connected" id="datasource-status-indicator"></span>
+            </div>
+            
+            <div class="datasource-grid">
+              <!-- localStorage -->
+              <div class="datasource-card active" data-source="localStorage">
+                <div class="datasource-header">
+                  <span class="datasource-icon">💾</span>
+                  <div class="datasource-title">
+                    <h4>localStorage</h4>
+                    <span class="datasource-badge default">Default</span>
+                  </div>
+                </div>
+                <p class="datasource-desc">Browser-based storage. Data persists locally, no sync across devices.</p>
+                <div class="datasource-features">
+                  <span class="feature">✓ No setup required</span>
+                  <span class="feature">✓ Works offline</span>
+                  <span class="feature">✗ No sync</span>
+                </div>
+                <button class="btn-secondary full-width datasource-select-btn" data-source="localStorage">Selected ✓</button>
+              </div>
+
+              <!-- Google Forms/Sheets -->
+              <div class="datasource-card" data-source="googleSheets">
+                <div class="datasource-header">
+                  <span class="datasource-icon">📊</span>
+                  <div class="datasource-title">
+                    <h4>Google Sheets</h4>
+                    <span class="datasource-badge cloud">Cloud</span>
+                  </div>
+                </div>
+                <p class="datasource-desc">Use Google Forms for writes and Apps Script API for reads.</p>
+                <div class="datasource-features">
+                  <span class="feature">✓ Free tier</span>
+                  <span class="feature">✓ Cloud sync</span>
+                  <span class="feature">✓ Spreadsheet backup</span>
+                </div>
+                <button class="btn-secondary full-width datasource-select-btn" data-source="googleSheets">Configure</button>
+              </div>
+
+              <!-- GitHub Gist -->
+              <div class="datasource-card" data-source="githubGist">
+                <div class="datasource-header">
+                  <span class="datasource-icon">📝</span>
+                  <div class="datasource-title">
+                    <h4>GitHub Gist</h4>
+                    <span class="datasource-badge cloud">Cloud</span>
+                  </div>
+                </div>
+                <p class="datasource-desc">Store data in a GitHub Gist. Public or secret, with version history.</p>
+                <div class="datasource-features">
+                  <span class="feature">✓ Version control</span>
+                  <span class="feature">✓ Public or private</span>
+                  <span class="feature">✓ Free unlimited</span>
+                </div>
+                <button class="btn-secondary full-width datasource-select-btn" data-source="githubGist">Configure</button>
+              </div>
+
+              <!-- GitHub Repo JSON -->
+              <div class="datasource-card" data-source="githubRepo">
+                <div class="datasource-header">
+                  <span class="datasource-icon">📁</span>
+                  <div class="datasource-title">
+                    <h4>GitHub Repo</h4>
+                    <span class="datasource-badge cloud">Cloud</span>
+                  </div>
+                </div>
+                <p class="datasource-desc">Store JSON data in a GitHub repository file.</p>
+                <div class="datasource-features">
+                  <span class="feature">✓ Version control</span>
+                  <span class="feature">✓ CI/CD friendly</span>
+                  <span class="feature">✗ Requires token</span>
+                </div>
+                <button class="btn-secondary full-width datasource-select-btn" data-source="githubRepo">Configure</button>
+              </div>
+
+              <!-- JSONbin.io -->
+              <div class="datasource-card" data-source="jsonbin">
+                <div class="datasource-header">
+                  <span class="datasource-icon">🗃️</span>
+                  <div class="datasource-title">
+                    <h4>JSONbin.io</h4>
+                    <span class="datasource-badge cloud">Cloud</span>
+                  </div>
+                </div>
+                <p class="datasource-desc">Free JSON storage API. 10K requests/month on free tier.</p>
+                <div class="datasource-features">
+                  <span class="feature">✓ Simple REST API</span>
+                  <span class="feature">✓ Free tier</span>
+                  <span class="feature">✗ Rate limited</span>
+                </div>
+                <button class="btn-secondary full-width datasource-select-btn" data-source="jsonbin">Configure</button>
+              </div>
+
+              <!-- npoint.io -->
+              <div class="datasource-card" data-source="npoint">
+                <div class="datasource-header">
+                  <span class="datasource-icon">📡</span>
+                  <div class="datasource-title">
+                    <h4>npoint.io</h4>
+                    <span class="datasource-badge cloud">Cloud</span>
+                  </div>
+                </div>
+                <p class="datasource-desc">Free JSON endpoints. No authentication required.</p>
+                <div class="datasource-features">
+                  <span class="feature">✓ No auth needed</span>
+                  <span class="feature">✓ Free forever</span>
+                  <span class="feature">✗ Public only</span>
+                </div>
+                <button class="btn-secondary full-width datasource-select-btn" data-source="npoint">Configure</button>
+              </div>
+            </div>
           </div>
 
           <!-- Users Tab -->
@@ -507,6 +628,131 @@
       </div>
     </div>
 
+    <!-- DataSource Configuration Modal -->
+    <div id="datasource-config-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="datasource-config-title">Configure Data Source</h2>
+          <button class="modal-close" id="close-datasource-config-modal">×</button>
+        </div>
+        <div class="modal-body">
+          <!-- Google Sheets Config -->
+          <div id="config-googleSheets" class="datasource-config-form" style="display:none;">
+            <p class="config-intro">Connect to Google Sheets using Forms for writes and Apps Script for reads.</p>
+            <div class="form-group">
+              <label>Google Form URL</label>
+              <input type="url" id="config-google-form-url" placeholder="https://docs.google.com/forms/d/e/.../viewform">
+              <span class="form-hint">The form for submitting new data</span>
+            </div>
+            <div class="form-group">
+              <label>Apps Script API URL</label>
+              <input type="url" id="config-google-api-url" placeholder="https://script.google.com/macros/s/.../exec">
+              <span class="form-hint">The deployed web app URL for reading data</span>
+            </div>
+            <div class="form-group">
+              <label>Data Type Prefix</label>
+              <input type="text" id="config-google-prefix" placeholder="USER" value="USER">
+              <span class="form-hint">Prefix for packed data format (e.g., USER, ITEM)</span>
+            </div>
+            <a href="https://docs.google.com/document/d/1example" target="_blank" class="setup-guide-link">📖 Setup Guide</a>
+          </div>
+
+          <!-- GitHub Gist Config -->
+          <div id="config-githubGist" class="datasource-config-form" style="display:none;">
+            <p class="config-intro">Store your data in a GitHub Gist. Works with public or secret gists.</p>
+            <div class="form-group">
+              <label>Gist ID</label>
+              <input type="text" id="config-gist-id" placeholder="abc123def456...">
+              <span class="form-hint">The ID from your Gist URL</span>
+            </div>
+            <div class="form-group">
+              <label>Filename</label>
+              <input type="text" id="config-gist-filename" placeholder="data.json" value="data.json">
+              <span class="form-hint">Name of the JSON file in the Gist</span>
+            </div>
+            <div class="form-group">
+              <label>GitHub Token <span class="optional">(optional for public gists)</span></label>
+              <input type="password" id="config-gist-token" placeholder="ghp_xxxxxxxxxxxx">
+              <span class="form-hint">Required for writing to gists</span>
+            </div>
+            <a href="https://gist.github.com/" target="_blank" class="setup-guide-link">📖 Create a Gist</a>
+          </div>
+
+          <!-- GitHub Repo Config -->
+          <div id="config-githubRepo" class="datasource-config-form" style="display:none;">
+            <p class="config-intro">Store JSON data directly in a GitHub repository file.</p>
+            <div class="form-group">
+              <label>Repository Owner</label>
+              <input type="text" id="config-repo-owner" placeholder="username or org">
+            </div>
+            <div class="form-group">
+              <label>Repository Name</label>
+              <input type="text" id="config-repo-name" placeholder="my-repo">
+            </div>
+            <div class="form-group">
+              <label>File Path</label>
+              <input type="text" id="config-repo-path" placeholder="data/database.json" value="data/database.json">
+            </div>
+            <div class="form-group">
+              <label>Branch</label>
+              <input type="text" id="config-repo-branch" placeholder="main" value="main">
+            </div>
+            <div class="form-group">
+              <label>GitHub Token</label>
+              <input type="password" id="config-repo-token" placeholder="ghp_xxxxxxxxxxxx">
+              <span class="form-hint">Required for read/write access</span>
+            </div>
+          </div>
+
+          <!-- JSONbin.io Config -->
+          <div id="config-jsonbin" class="datasource-config-form" style="display:none;">
+            <p class="config-intro">Use JSONbin.io for simple JSON storage. Free tier: 10K requests/month.</p>
+            <div class="form-group">
+              <label>Bin ID</label>
+              <input type="text" id="config-jsonbin-id" placeholder="60abc123def456...">
+              <span class="form-hint">Create a bin at jsonbin.io first</span>
+            </div>
+            <div class="form-group">
+              <label>API Key</label>
+              <input type="password" id="config-jsonbin-key" placeholder="$2a$10$...">
+              <span class="form-hint">Your JSONbin.io Master Key</span>
+            </div>
+            <a href="https://jsonbin.io/" target="_blank" class="setup-guide-link">📖 Get Started with JSONbin.io</a>
+          </div>
+
+          <!-- npoint.io Config -->
+          <div id="config-npoint" class="datasource-config-form" style="display:none;">
+            <p class="config-intro">Free JSON endpoints with npoint.io. No authentication required.</p>
+            <div class="form-group">
+              <label>Endpoint ID</label>
+              <input type="text" id="config-npoint-id" placeholder="abc123def456">
+              <span class="form-hint">Create an endpoint at npoint.io</span>
+            </div>
+            <p class="config-warning">⚠️ Note: npoint.io endpoints are public. Do not store sensitive data.</p>
+            <a href="https://www.npoint.io/" target="_blank" class="setup-guide-link">📖 Create an Endpoint</a>
+          </div>
+
+          <!-- localStorage Info -->
+          <div id="config-localStorage" class="datasource-config-form" style="display:none;">
+            <p class="config-intro">Browser localStorage is the default storage. No configuration needed.</p>
+            <div class="localstorage-info">
+              <div class="info-item"><span class="info-icon">✓</span> Data stored in your browser</div>
+              <div class="info-item"><span class="info-icon">✓</span> Works offline</div>
+              <div class="info-item"><span class="info-icon">✓</span> No setup required</div>
+              <div class="info-item"><span class="info-icon">⚠</span> Cleared when browser data is cleared</div>
+              <div class="info-item"><span class="info-icon">⚠</span> No sync across devices</div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" id="test-datasource-btn">🔌 Test Connection</button>
+            <button type="button" class="btn-primary" id="save-datasource-btn">Save & Activate</button>
+          </div>
+          <div id="datasource-test-result" class="test-result"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay"><div class="loading-spinner"></div><p id="loading-message">Loading...</p></div>
 
@@ -522,6 +768,7 @@
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/datasource.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

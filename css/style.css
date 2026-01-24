@@ -1584,3 +1584,212 @@ h4 { font-size: 1rem; }
 .feature-btn-icon { font-size: 1.1rem; }
 .feature-btn-text { white-space: nowrap; }
 @media (max-width: 600px) { .feature-request-btn { padding: 0.6rem 1rem; font-size: 0.8rem; bottom: 16px; right: 16px; } }
+
+/* ==================== DATASOURCE PANEL ==================== */
+.datasource-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--dark);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.status-label {
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.status-value {
+  color: var(--white);
+  font-weight: 600;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gray);
+}
+
+.status-indicator.connected {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+.status-indicator.disconnected {
+  background: var(--red);
+}
+
+.datasource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.datasource-card {
+  background: var(--dark);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.datasource-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.datasource-card.active {
+  border-color: var(--green);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.datasource-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.datasource-icon {
+  font-size: 1.75rem;
+}
+
+.datasource-title {
+  flex: 1;
+}
+
+.datasource-title h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--white);
+}
+
+.datasource-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.datasource-badge.default {
+  background: var(--primary);
+  color: white;
+}
+
+.datasource-badge.cloud {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.datasource-desc {
+  color: var(--gray);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.datasource-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.datasource-features .feature {
+  font-size: 0.75rem;
+  color: var(--gray-light);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+/* DataSource Config Modal */
+.datasource-config-form {
+  animation: fadeIn 0.2s ease;
+}
+
+.config-intro {
+  color: var(--gray-light);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.config-warning {
+  color: var(--yellow);
+  background: rgba(234, 179, 8, 0.1);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+.setup-guide-link {
+  display: inline-block;
+  color: var(--primary);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  text-decoration: none;
+}
+
+.setup-guide-link:hover {
+  text-decoration: underline;
+}
+
+.localstorage-info {
+  background: var(--dark);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.localstorage-info .info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  color: var(--gray-light);
+}
+
+.info-icon {
+  font-size: 1rem;
+}
+
+.test-result {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.test-result:empty {
+  display: none;
+}
+
+.test-result .testing {
+  color: var(--primary);
+}
+
+.test-result .success {
+  color: var(--green);
+}
+
+.test-result .error {
+  color: var(--red);
+}
+
+.test-result.success {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.test-result.error {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
