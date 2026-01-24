@@ -62,8 +62,18 @@ const SQLDatabase = {
       
       // If no local database loaded AND not on localhost, auto-load from GitHub
       if (!this.isLoaded && !this.isLocalhost()) {
-        console.log('[SQLDatabase] No local database, attempting auto-load from GitHub...');
-        await this.autoLoadFromGitHub();
+        console.log('[SQLDatabase] No local database found, not on localhost - attempting auto-load from GitHub...');
+        console.log('[SQLDatabase] Hostname:', window.location.hostname, 'Protocol:', window.location.protocol);
+        const loaded = await this.autoLoadFromGitHub();
+        if (loaded) {
+          console.log('[SQLDatabase] Successfully auto-loaded database from GitHub');
+        } else {
+          console.log('[SQLDatabase] Could not auto-load from GitHub, starting with empty state');
+        }
+      } else if (this.isLoaded) {
+        console.log('[SQLDatabase] Loaded database from localStorage');
+      } else {
+        console.log('[SQLDatabase] On localhost - using localStorage mode');
       }
       
       // Load query history
@@ -72,7 +82,7 @@ const SQLDatabase = {
       // Bind UI events
       this.bindEvents();
       
-      // Update UI
+      // Update UI (after potential auto-load)
       this.updateStatus();
       this.refreshTables();
       this.updateLocationUI();
@@ -84,33 +94,51 @@ const SQLDatabase = {
   },
   
   /**
-   * Check if running on localhost
+   * Check if running on localhost (development mode)
    */
   isLocalhost() {
     const host = window.location.hostname;
-    return host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('file');
+    const protocol = window.location.protocol;
+    return host === 'localhost' || 
+           host === '127.0.0.1' || 
+           host.startsWith('192.168.') || 
+           host.startsWith('10.') ||
+           protocol === 'file:';
   },
   
   /**
    * Auto-load database from GitHub using defaults (no config needed)
+   * This is called automatically on non-localhost sites when no local database exists
    */
   async autoLoadFromGitHub() {
     try {
-      const config = this.DEFAULT_GITHUB_CONFIG;
+      // Use configured GitHub settings, or fall back to AIUNITES defaults
+      const config = (this.locationConfig.githubSync && this.locationConfig.githubSync.owner) 
+        ? this.locationConfig.githubSync 
+        : this.DEFAULT_GITHUB_CONFIG;
+      
       const path = config.path || 'data/app.db';
       const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${path}`;
       
       console.log('[SQLDatabase] Auto-loading from:', apiUrl);
+      console.log('[SQLDatabase] Using config:', JSON.stringify({ owner: config.owner, repo: config.repo, path }));
       
-      const resp = await fetch(apiUrl);
+      const headers = {};
+      if (config.token) {
+        headers['Authorization'] = `token ${config.token}`;
+      }
+      
+      const resp = await fetch(apiUrl, { headers });
       
       if (!resp.ok) {
         if (resp.status === 404) {
-          console.log('[SQLDatabase] No database file found on GitHub');
+          console.log('[SQLDatabase] No database file found on GitHub at:', path);
+        } else if (resp.status === 403) {
+          console.warn('[SQLDatabase] GitHub API rate limit exceeded or access denied');
         } else {
-          console.warn('[SQLDatabase] GitHub API error:', resp.status);
+          console.warn('[SQLDatabase] GitHub API error:', resp.status, resp.statusText);
         }
-        return;
+        return false;
       }
       
       const data = await resp.json();
@@ -126,12 +154,15 @@ const SQLDatabase = {
       this.db = new this.SQL.Database(bytes);
       this.isLoaded = true;
       
-      // Set GitHub Sync as active location
+      // Set GitHub Sync as active location (don't save if using defaults on public site)
       this.location = 'githubSync';
-      this.locationConfig.githubSync = config;
-      this.saveLocationConfig();
+      if (config !== this.DEFAULT_GITHUB_CONFIG) {
+        this.locationConfig.githubSync = config;
+        this.saveLocationConfig();
+      }
       
       console.log('[SQLDatabase] Auto-loaded from GitHub successfully!');
+      console.log('[SQLDatabase] Database size:', bytes.length, 'bytes');
       
       // Enable save button if it exists
       const saveBtn = document.getElementById('sql-save-db-btn');
@@ -141,8 +172,11 @@ const SQLDatabase = {
         showToast('🐙 Database loaded from GitHub!', 'success');
       }
       
+      return true;
+      
     } catch (error) {
       console.error('[SQLDatabase] Auto-load from GitHub failed:', error);
+      return false;
     }
   },
   

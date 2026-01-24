@@ -278,6 +278,65 @@ Successfully saved SQLite database to GitHub repository.
 
 ---
 
+## Update: Domain-Agnostic Auto-Load Fix
+
+**Date:** January 24, 2026
+
+### Issue: Database Not Loading on GitHub Pages
+
+**Problem:** When visiting https://aiunites.github.io/DemoTemplate/, the database wasn't auto-loading because:
+1. The `isLocalhost()` and `autoLoadFromGitHub()` methods weren't in the deployed version
+2. Changes were made locally but not pushed to GitHub
+3. localStorage is domain-specific, so config saved on localhost wasn't available on GitHub Pages
+
+**Solution:** Updated sql-database.js to:
+
+### Changes Made
+
+| File | Changes |
+|------|--------|
+| `js/sql-database.js` | Improved `isLocalhost()` to handle file: protocol |
+| `js/sql-database.js` | Enhanced `autoLoadFromGitHub()` with better config fallback |
+| `js/sql-database.js` | Added detailed console logging for debugging |
+| `js/sql-database.js` | Fixed auto-load to use DEFAULT_GITHUB_CONFIG when no local config exists |
+
+### Key Improvements
+
+1. **Better localhost detection:**
+   - Added `protocol === 'file:'` check
+   - Added `10.x.x.x` private IP range
+   - More robust detection for development environments
+
+2. **Auto-load from GitHub:**
+   - Uses saved GitHub config if available
+   - Falls back to `DEFAULT_GITHUB_CONFIG` for AIUNITES sites
+   - Doesn't save config to localStorage when using defaults (keeps it clean)
+   - Better error handling for 403/404 responses
+
+3. **Enhanced logging:**
+   - Logs hostname and protocol on startup
+   - Logs which config is being used
+   - Logs database size after loading
+   - Clear status messages for debugging
+
+### How It Works Now
+
+1. **On localhost/127.0.0.1/file://**: Uses localStorage, no auto-load
+2. **On GitHub Pages (no local DB)**: Auto-loads from `AIUNITES/AIUNITES-database-sync/data/app.db`
+3. **On any site with configured GitHub Sync**: Uses that config to auto-load
+
+### To Deploy
+
+Push changes to GitHub:
+```bash
+cd C:\Users\Tom\Documents\GitHub\DemoTemplate
+git add .
+git commit -m "Fix domain-agnostic database auto-load"
+git push
+```
+
+---
+
 *Log updated: January 24, 2026*
 
 ---
