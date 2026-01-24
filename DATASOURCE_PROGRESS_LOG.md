@@ -282,6 +282,54 @@ Successfully saved SQLite database to GitHub repository.
 
 ---
 
+## Update: Auto-Load Database from GitHub (Domain-Agnostic)
+
+**Date:** January 24, 2026
+
+### Issue Fixed: Database Not Available on GitHub Pages
+
+**Problem:** Database wasn't loading when visitors accessed the live site because:
+1. localStorage is domain-specific
+2. Config saved on localhost wasn't available on aiunites.github.io
+3. Manual "Load from GitHub" button was required
+
+**Solution:** Added automatic GitHub database loading:
+
+```javascript
+// On init, if no local database AND not localhost:
+if (!this.isLoaded && !this.isLocalhost()) {
+  await this.autoLoadFromGitHub();
+}
+```
+
+### Changes Made
+
+| File | Changes |
+|------|--------|
+| `js/sql-database.js` | Added `isLocalhost()` method |
+| `js/sql-database.js` | Added `autoLoadFromGitHub()` method |
+| `js/sql-database.js` | Modified `init()` to auto-load when needed |
+
+### How It Works Now
+
+1. **Local development** (localhost/127.0.0.1): Uses localStorage as before
+2. **Live site** (GitHub Pages): Auto-loads from AIUNITES GitHub repo
+3. **No config needed**: Uses DEFAULT_GITHUB_CONFIG for public read access
+4. **Automatic fallback**: If no database found, shows "Database not loaded"
+
+### Benefits
+
+- Domain-agnostic: Works on any AIUNITES site without config
+- Zero setup for visitors: Database loads automatically
+- GitHub as source of truth: All sites read from same repo
+- Local dev unaffected: Still uses localStorage when on localhost
+
+---
+
+*Log updated: January 24, 2026*
+
+---
+
 ## Update: Default AIUNITES GitHub Config Added
 
 **Date:** January 24, 2026

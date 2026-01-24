@@ -57,8 +57,14 @@ const SQLDatabase = {
       // Load location config
       this.loadLocationConfig();
       
-      // Try to load saved database
+      // Try to load saved database from localStorage
       await this.loadFromStorage();
+      
+      // If no local database loaded AND not on localhost, auto-load from GitHub
+      if (!this.isLoaded && !this.isLocalhost()) {
+        console.log('[SQLDatabase] No local database, attempting auto-load from GitHub...');
+        await this.autoLoadFromGitHub();
+      }
       
       // Load query history
       this.loadHistory();
@@ -74,6 +80,69 @@ const SQLDatabase = {
     } catch (error) {
       console.error('[SQLDatabase] Failed to initialize:', error);
       this.updateStatus('Error loading sql.js', 'error');
+    }
+  },
+  
+  /**
+   * Check if running on localhost
+   */
+  isLocalhost() {
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('file');
+  },
+  
+  /**
+   * Auto-load database from GitHub using defaults (no config needed)
+   */
+  async autoLoadFromGitHub() {
+    try {
+      const config = this.DEFAULT_GITHUB_CONFIG;
+      const path = config.path || 'data/app.db';
+      const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${path}`;
+      
+      console.log('[SQLDatabase] Auto-loading from:', apiUrl);
+      
+      const resp = await fetch(apiUrl);
+      
+      if (!resp.ok) {
+        if (resp.status === 404) {
+          console.log('[SQLDatabase] No database file found on GitHub');
+        } else {
+          console.warn('[SQLDatabase] GitHub API error:', resp.status);
+        }
+        return;
+      }
+      
+      const data = await resp.json();
+      
+      // Decode base64 content
+      const binary = atob(data.content.replace(/\n/g, ''));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      
+      // Load into sql.js
+      this.db = new this.SQL.Database(bytes);
+      this.isLoaded = true;
+      
+      // Set GitHub Sync as active location
+      this.location = 'githubSync';
+      this.locationConfig.githubSync = config;
+      this.saveLocationConfig();
+      
+      console.log('[SQLDatabase] Auto-loaded from GitHub successfully!');
+      
+      // Enable save button if it exists
+      const saveBtn = document.getElementById('sql-save-db-btn');
+      if (saveBtn) saveBtn.disabled = false;
+      
+      if (typeof showToast === 'function') {
+        showToast('🐙 Database loaded from GitHub!', 'success');
+      }
+      
+    } catch (error) {
+      console.error('[SQLDatabase] Auto-load from GitHub failed:', error);
     }
   },
   
