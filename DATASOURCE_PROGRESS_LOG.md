@@ -282,6 +282,50 @@ Successfully saved SQLite database to GitHub repository.
 
 ---
 
+## Update: Default AIUNITES GitHub Config Added
+
+**Date:** January 24, 2026
+
+### Issue Fixed: Database Not Loading on GitHub Pages
+
+**Problem:** When accessing the site from GitHub Pages (aiunites.github.io), the database wasn't loading because:
+1. GitHub Sync config (owner, repo, path, token) was stored in localStorage
+2. localStorage is domain-specific
+3. Config saved on localhost wasn't available on the live site
+
+**Solution:** Added default AIUNITES GitHub configuration:
+
+```javascript
+DEFAULT_GITHUB_CONFIG: {
+  owner: 'AIUNITES',
+  repo: 'AIUNITES-database-sync',
+  path: 'data/app.db',
+  token: '',  // Not needed for public repos
+  autoSync: false
+}
+```
+
+### Changes Made
+
+| File | Changes |
+|------|--------|
+| `js/sql-database.js` | Added `DEFAULT_GITHUB_CONFIG` constant |
+| `js/sql-database.js` | Modified `loadFromGitHub()` to use defaults if no config |
+| `js/sql-database.js` | Modified `loadLocationFormValues()` to show defaults in form |
+
+### How It Works Now
+
+1. **New visitors** to any AIUNITES site can click "Load from GitHub"
+2. The system uses AIUNITES defaults automatically
+3. No configuration needed for read-only access
+4. Write access still requires a token (for authorized users)
+
+---
+
+*Log updated: January 24, 2026*
+
+---
+
 ## Update: Database Location Options Added
 
 **Date:** January 24, 2026

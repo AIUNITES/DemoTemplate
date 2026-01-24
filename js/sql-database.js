@@ -24,6 +24,15 @@ const SQLDatabase = {
   location: 'browser',
   locationConfig: {},
   
+  // Default AIUNITES GitHub config (for public read-only access)
+  DEFAULT_GITHUB_CONFIG: {
+    owner: 'AIUNITES',
+    repo: 'AIUNITES-database-sync',
+    path: 'data/app.db',
+    token: '',  // Not needed for public repos
+    autoSync: false
+  },
+  
   // Database location types
   LOCATIONS: {
     browser: { name: 'Browser', icon: '💻', requiresConfig: false },
@@ -192,16 +201,18 @@ const SQLDatabase = {
         break;
         
       case 'githubSync':
+        // Use saved config or AIUNITES defaults
+        const ghConfig = Object.keys(config).length > 0 ? config : this.DEFAULT_GITHUB_CONFIG;
         const ghOwner = document.getElementById('config-gh-sync-owner');
         const ghRepo = document.getElementById('config-gh-sync-repo');
         const ghPath = document.getElementById('config-gh-sync-path');
         const ghToken = document.getElementById('config-gh-sync-token');
         const ghAuto = document.getElementById('config-gh-sync-auto');
-        if (ghOwner) ghOwner.value = config.owner || '';
-        if (ghRepo) ghRepo.value = config.repo || '';
-        if (ghPath) ghPath.value = config.path || 'data/app.db';
-        if (ghToken) ghToken.value = config.token || '';
-        if (ghAuto) ghAuto.checked = config.autoSync !== false;
+        if (ghOwner) ghOwner.value = ghConfig.owner || '';
+        if (ghRepo) ghRepo.value = ghConfig.repo || '';
+        if (ghPath) ghPath.value = ghConfig.path || 'data/app.db';
+        if (ghToken) ghToken.value = ghConfig.token || '';
+        if (ghAuto) ghAuto.checked = ghConfig.autoSync !== false;
         break;
         
       case 'supabase':
@@ -852,10 +863,11 @@ while ($true) {
    * Load database from GitHub repository
    */
   async loadFromGitHub() {
-    const config = this.locationConfig.githubSync;
+    // Use saved config or fall back to AIUNITES defaults for public access
+    let config = this.locationConfig.githubSync;
     if (!config || !config.owner || !config.repo) {
-      alert('Please configure GitHub Sync first');
-      return;
+      console.log('[SQLDatabase] No GitHub config found, using AIUNITES defaults');
+      config = this.DEFAULT_GITHUB_CONFIG;
     }
     
     try {
