@@ -116,7 +116,7 @@
           <span>•</span>
           <a href="#" id="footer-privacy">Privacy Policy</a>
         </p>
-        <span class="version-number">v1.0.0</span>
+        <span class="version-number" id="footer-version">v1.0.0</span>
       </footer>
     </div>
 
@@ -187,7 +187,7 @@
           <button class="btn-secondary full-width" id="auth-demo-btn" style="margin-bottom: 1rem;">👁️ Try Demo Instead</button>
           <p>By continuing, you agree to our Terms of Service</p>
           <a href="#" id="reset-app-link" class="reset-link">🔄 Reset App to Defaults</a>
-          <span class="version-number">v1.0.0</span>
+          <span class="version-number" id="auth-version">v1.0.0</span>
         </div>
       </div>
     </div>
@@ -669,7 +669,8 @@ Examples:
               </div>
             </div>
             <div class="admin-version">
-              <span>App Version: v1.0.0</span>
+              <span>App Version: <span id="admin-version">v1.0.0</span></span>
+              <span class="admin-updated">Updated: <span id="admin-last-updated">-</span></span>
             </div>
             <div class="admin-actions">
               <button class="btn-secondary" id="export-all-data-btn">📤 Export All Data</button>

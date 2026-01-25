@@ -19,7 +19,14 @@ const APP_CONFIG = {
   tagline: 'Your Tagline Here',
   description: 'A brief description of what your app does.',
   icon: '📦', // Emoji for favicon and headers
-  version: '1.0.0',
+  
+  // VERSION INFO - Update these on every release!
+  // See CLAUDE.md for versioning rules:
+  //   MAJOR (x.0.0) - Breaking changes
+  //   MINOR (0.x.0) - New features
+  //   PATCH (0.0.x) - Bug fixes
+  version: '1.1.0',
+  lastUpdated: '2026-01-25',
   
   // Logo HTML (can use HTML/emoji)
   logoHtml: 'Demo<span>App</span>',
@@ -236,8 +243,20 @@ const APP_CONFIG = {
 
   // ============================================
   // CHANGELOG (shown in admin panel)
+  // Update this when bumping version!
+  // Format: { version: 'vX.X.X', date: 'Month Year', changes: [...] }
   // ============================================
   changelog: [
+    {
+      version: 'v1.1.0',
+      date: 'January 25, 2026',
+      changes: [
+        'Added dynamic version display from config',
+        'Added lastUpdated field to config',
+        'Version now shows in footer, auth screen, and admin panel',
+        'Added versioning documentation to CLAUDE.md'
+      ]
+    },
     {
       version: 'v1.0.0',
       date: 'January 2026',
@@ -256,3 +275,6 @@ const APP_CONFIG = {
 
 // Make config globally accessible
 window.APP_CONFIG = APP_CONFIG;
+
+// Log version on load (helpful for debugging)
+console.log(`${APP_CONFIG.name} v${APP_CONFIG.version} (${APP_CONFIG.lastUpdated})`);

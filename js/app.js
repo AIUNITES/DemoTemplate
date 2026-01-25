@@ -42,6 +42,16 @@ const App = {
     // Update title
     document.title = `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`;
     
+    // Update version numbers
+    const versionText = `v${APP_CONFIG.version}`;
+    document.querySelectorAll('#footer-version, #auth-version, #admin-version').forEach(el => {
+      if (el) el.textContent = versionText;
+    });
+    const lastUpdatedEl = document.getElementById('admin-last-updated');
+    if (lastUpdatedEl && APP_CONFIG.lastUpdated) {
+      lastUpdatedEl.textContent = APP_CONFIG.lastUpdated;
+    }
+    
     // Update all logo elements
     document.querySelectorAll('.logo').forEach(el => {
       el.innerHTML = APP_CONFIG.logoHtml;
