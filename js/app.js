@@ -974,6 +974,33 @@ const App = {
   },
 
   loadAdminUsers() {
+    // Try to use SQL database first (shows ALL users from ALL sites)
+    if (typeof SQLDatabase !== 'undefined' && SQLDatabase.db && SQLDatabase.getAllUsersAllSites) {
+      const sqlUsers = SQLDatabase.getAllUsersAllSites();
+      if (sqlUsers && sqlUsers.length > 0) {
+        document.getElementById('users-count').textContent = `${sqlUsers.length} users from all sites`;
+        
+        const table = document.getElementById('users-table');
+        table.innerHTML = sqlUsers.map(user => `
+          <div class="user-row">
+            <div class="user-info">
+              <div class="user-avatar-small">${(user.displayName || user.username || '?').charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="user-row-name">${this.escapeHtml(user.displayName || user.username)}</div>
+                <div class="user-row-username">@${user.username} ${user.role === 'admin' ? '🛡️' : ''}</div>
+              </div>
+            </div>
+            <div class="user-meta">
+              <span class="site-badge" style="background: ${user.site === 'DemoTemplate' ? 'rgba(139,92,246,0.2)' : 'rgba(239,68,68,0.2)'}; color: ${user.site === 'DemoTemplate' ? '#8b5cf6' : '#ef4444'}; padding: 2px 8px; border-radius: 10px; font-size: 11px;">${user.site || 'unknown'}</span>
+              <span>Joined: ${user.createdAt ? this.formatDate(user.createdAt) : '-'}</span>
+            </div>
+          </div>
+        `).join('');
+        return;
+      }
+    }
+    
+    // Fallback to localStorage users
     const users = Storage.getUsers();
     const userList = Object.values(users);
     
