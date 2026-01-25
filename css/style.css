@@ -1186,18 +1186,57 @@ h4 { font-size: 1rem; }
     justify-content: center;
   }
   
-  .nav-center {
-    display: none;
-  }
-  
   .form-row {
     grid-template-columns: 1fr;
   }
 }
 
+@media (max-width: 768px) {
+  /* Landing nav - stack on mobile */
+  .landing-nav {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem 5%;
+  }
+  
+  .landing-nav .btn-row {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* App nav - make it work on portrait mobile */
+  .app-nav {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .nav-left {
+    flex: 0 0 auto;
+  }
+  
+  .nav-center {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--gray-dark);
+    margin-top: 0.5rem;
+  }
+  
+  .nav-right {
+    margin-left: auto;
+  }
+  
+  .nav-tab {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+
 @media (max-width: 600px) {
   .app-nav {
-    padding: 1rem;
+    padding: 0.5rem 0.75rem;
   }
   
   .user-name {
@@ -1226,6 +1265,16 @@ h4 { font-size: 1rem; }
     left: 1rem;
     right: 1rem;
     bottom: 1rem;
+  }
+  
+  /* Smaller nav tabs on small screens */
+  .nav-tab {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .logo {
+    font-size: 1.25rem;
   }
 }
 
