@@ -362,6 +362,43 @@ git push
 
 ---
 
+## UA Test: DemoTemplate - PASSED ✅
+
+**Date:** January 24, 2026, 7:28 PM  
+**URL:** https://aiunites.github.io/DemoTemplate/  
+**Tester:** Claude (automated)
+
+### Test Cases
+
+| # | Test Case | Expected | Actual | Status |
+|---|-----------|----------|--------|--------|
+| 1 | Page loads on GitHub Pages | Site loads without errors | Site loaded successfully | ✅ PASS |
+| 2 | SQL Database auto-loads | DB loads from GitHub repo | Loaded 16,384 bytes from AIUNITES-database-sync | ✅ PASS |
+| 3 | Console shows load messages | Detailed logging | All expected log messages present | ✅ PASS |
+| 4 | Logout from Administrator | Shows login page | Login page displayed | ✅ PASS |
+| 5 | Login as demo/demo123 | Login succeeds | Login successful, shows "Demo User" | ✅ PASS |
+| 6 | Demo user sees items | 2 sample items displayed | 2 items shown (Sample Item 1, 2) | ✅ PASS |
+| 7 | Stats display correctly | Total: 2, Favorites: 0, This Week: 2 | All stats correct | ✅ PASS |
+
+### Console Log Evidence
+
+```
+[SQLDatabase] sql.js loaded successfully
+[SQLDatabase] No local database found, not on localhost - attempting auto-load from GitHub...
+[SQLDatabase] Hostname: aiunites.github.io Protocol: https:
+[SQLDatabase] Auto-loading from: https://api.github.com/repos/AIUNITES/AIUNITES-database-sync/contents/data/app.db
+[SQLDatabase] Using config: {"owner":"AIUNITES","repo":"AIUNITES-database-sync","path":"data/app.db"}
+[SQLDatabase] Auto-loaded from GitHub successfully!
+[SQLDatabase] Database size: 16384 bytes
+[SQLDatabase] Successfully auto-loaded database from GitHub
+```
+
+### Summary
+
+**Overall Result: PASSED** - All 7 test cases passed. The domain-agnostic database auto-load fix is working correctly on GitHub Pages.
+
+---
+
 ## Update: SQL Database Authentication Integration
 
 **Date:** January 24, 2026
