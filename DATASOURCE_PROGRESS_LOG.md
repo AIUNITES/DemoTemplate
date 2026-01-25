@@ -335,6 +335,31 @@ git commit -m "Fix domain-agnostic database auto-load"
 git push
 ```
 
+### UA Test Results (January 24, 2026, 7:28 PM)
+
+✅ **PASSED** - GitHub Pages site tested at https://aiunites.github.io/DemoTemplate/
+
+**Database Auto-Load:**
+- Console shows: `[SQLDatabase] sql.js loaded successfully`
+- Console shows: `[SQLDatabase] No local database found, not on localhost - attempting auto-load from GitHub...`
+- Console shows: `[SQLDatabase] Hostname: aiunites.github.io Protocol: https:`
+- Console shows: `[SQLDatabase] Auto-loading from: https://api.github.com/repos/AIUNITES/AIUNITES-database-sync/contents/data/app.db`
+- Console shows: `[SQLDatabase] Auto-loaded from GitHub successfully!`
+- Console shows: `[SQLDatabase] Database size: 16384 bytes`
+
+**Login Test:**
+- Logged out as Administrator
+- Entered username: `demo`
+- Entered password: `demo123`
+- ✅ Login successful - shows "Demo User" with 2 sample items
+
+**Important Note:** Authentication uses **localStorage** (from `APP_CONFIG`), NOT the SQL database. The SQL database `users` table is a separate demo data store.
+
+| System | Purpose | Source |
+|--------|---------|--------|
+| localStorage users | Authentication | `APP_CONFIG.defaultDemo/defaultAdmin` |
+| SQL Database users | Demo data display | `AIUNITES-database-sync/data/app.db` |
+
 ---
 
 *Log updated: January 24, 2026*
