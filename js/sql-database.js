@@ -1469,6 +1469,18 @@ WHERE id = 1;`,
   // ==================== SHARED DATABASE USER METHODS ====================
   
   /**
+   * Ensure required tables exist (called after database load)
+   */
+  ensureTables() {
+    if (!this.db) return;
+    
+    // Ensure users table with site column exists
+    this.ensureUsersTable();
+    
+    console.log('[SQLDatabase] Tables ensured');
+  },
+  
+  /**
    * Ensure users table exists with site column for multi-site support
    * Schema matches actual DemoTemplate database
    */
