@@ -101,23 +101,24 @@ const SQLDatabase = {
       // Load location config
       this.loadLocationConfig();
       
-      // Try to load saved database from localStorage
-      await this.loadFromStorage();
-      
-      // If no local database loaded AND not on localhost, auto-load from GitHub
-      if (!this.isLoaded && !this.isLocalhost()) {
-        console.log('[SQLDatabase] No local database found, not on localhost - attempting auto-load from GitHub...');
-        console.log('[SQLDatabase] Hostname:', window.location.hostname, 'Protocol:', window.location.protocol);
+      // When online (not localhost), ALWAYS try GitHub first for shared database
+      if (!this.isLocalhost()) {
+        console.log('[SQLDatabase] Online mode - loading shared database from GitHub...');
         const loaded = await this.autoLoadFromGitHub();
-        if (loaded) {
-          console.log('[SQLDatabase] Successfully auto-loaded database from GitHub');
-        } else {
-          console.log('[SQLDatabase] Could not auto-load from GitHub, starting with empty state');
+        if (!loaded) {
+          // Fallback to localStorage if GitHub fails
+          console.log('[SQLDatabase] GitHub load failed, trying localStorage...');
+          await this.loadFromStorage();
         }
-      } else if (this.isLoaded) {
-        console.log('[SQLDatabase] Loaded database from localStorage');
       } else {
-        console.log('[SQLDatabase] On localhost - using localStorage mode');
+        // Localhost: use localStorage (development mode)
+        console.log('[SQLDatabase] Localhost mode - using local database');
+        await this.loadFromStorage();
+      }
+      
+      // Ensure required tables exist
+      if (this.isLoaded) {
+        this.ensureTables();
       }
       
       // Load query history
