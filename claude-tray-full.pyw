@@ -190,6 +190,9 @@ def update_stats():
             state.net_down = round(net.bytes_recv / (1024**3), 2)
             state.net_up = round(net.bytes_sent / (1024**3), 2)
             
+            # Auto-publish status
+            parse_publish_log()
+            
         except Exception as e:
             pass
         
@@ -256,11 +259,18 @@ def create_icon_image():
 
 def get_tooltip():
     """Generate tooltip text"""
-    server_status = "✓ Running" if state.server_ok else "✗ Stopped"
-    claude_status = f"✓ {state.claude_mem}MB" if state.claude_running else "✗ Off"
-    wifi_status = f"{state.wifi_signal}%" if state.wifi_signal > 0 else "N/A"
+    server_status = "✓" if state.server_ok else "✗"
     
-    return f"CPU:{state.cpu}% RAM:{state.ram}% WiFi:{wifi_status} Server:{server_status}"
+    # Auto-publish info in tooltip
+    if state.last_push_time:
+        push_info = f"Last: {time_ago(state.last_push_time)}"
+    else:
+        push_info = "No pushes"
+    
+    next_push = get_next_push_time()
+    next_info = f"Next: {time_until(next_push)}"
+    
+    return f"{push_info} | {next_info} | CPU:{state.cpu}% | Server:{server_status}"
 
 def start_server(icon=None, item=None):
     """Start the local server"""
@@ -305,7 +315,7 @@ def show_details(icon=None, item=None):
         
         root = tk.Tk()
         root.title("Claude System Monitor")
-        root.geometry("350x450")
+        root.geometry("350x550")
         root.configure(bg='#1e1e2e')
         root.resizable(False, False)
         
@@ -388,6 +398,27 @@ def show_details(icon=None, item=None):
         server_text = f"Running (:{SERVER_PORT})" if state.server_ok else "Stopped"
         detail_row(status_frame, "🌐 Server:", server_text, server_color)
         
+        # Divider
+        tk.Frame(frame, bg='#45475a', height=1).pack(fill='x', pady=15)
+        
+        # Auto-Publish section
+        publish_frame = tk.Frame(frame, bg=bg_color)
+        publish_frame.pack(fill='x')
+        
+        tk.Label(publish_frame, text="📤 Auto-Publish", font=('Segoe UI', 11, 'bold'),
+                bg=bg_color, fg=fg_color).pack(anchor='w', pady=(0, 8))
+        
+        if state.last_push_time:
+            detail_row(publish_frame, "Last Push:", f"{time_ago(state.last_push_time)} ({state.last_push_repo})")
+        else:
+            detail_row(publish_frame, "Last Push:", "No pushes today")
+        
+        if state.last_run_time:
+            detail_row(publish_frame, "Last Check:", time_ago(state.last_run_time))
+        
+        next_push = get_next_push_time()
+        detail_row(publish_frame, "Next Check:", f"{time_until(next_push)} ({next_push.strftime('%H:%M')})")
+        
         # Close button
         tk.Button(frame, text="Close", command=root.destroy,
                  bg='#45475a', fg=fg_color, font=('Segoe UI', 10),
@@ -396,6 +427,18 @@ def show_details(icon=None, item=None):
         root.mainloop()
     except Exception as e:
         print(f"Error showing details: {e}")
+
+def open_publish_log(icon=None, item=None):
+    """Open the publish log file"""
+    os.startfile(PUBLISH_LOG)
+
+def open_github_folder(icon=None, item=None):
+    """Open GitHub folder"""
+    os.startfile(r"C:\Users\Tom\Documents\GitHub")
+
+def run_publish_now(icon=None, item=None):
+    """Run the publish script manually"""
+    os.startfile(r"C:\Users\Tom\Documents\GitHub\scripts\auto-publish.bat")
 
 def quit_app(icon, item):
     """Quit the tray app"""
@@ -418,18 +461,21 @@ def main():
     stats_thread.start()
     time.sleep(1.5)  # Wait for initial stats
     
-    # Menu
+    # Menu - Auto-publish at TOP for visibility
     menu = pystray.Menu(
+        pystray.MenuItem(lambda t: f"📤 Last Push: {time_ago(state.last_push_time)} ({state.last_push_repo or 'N/A'})", None, enabled=False),
+        pystray.MenuItem(lambda t: f"⏰ Next Check: {time_until(get_next_push_time())}", None, enabled=False),
+        pystray.MenuItem("🚀 Run Publish Now", run_publish_now),
+        pystray.Menu.SEPARATOR,
         pystray.MenuItem("📊 Show Details", show_details, default=True),
         pystray.MenuItem("🌐 Open Browser", open_browser),
+        pystray.MenuItem("📁 Open GitHub Folder", open_github_folder),
+        pystray.MenuItem("📄 Open Publish Log", open_publish_log),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("▶️ Start Server", start_server),
         pystray.MenuItem("⏹️ Stop Server", stop_server),
         pystray.Menu.SEPARATOR,
-        pystray.MenuItem(lambda t: f"CPU: {state.cpu}%", None, enabled=False),
-        pystray.MenuItem(lambda t: f"RAM: {state.ram}%", None, enabled=False),
-        pystray.MenuItem(lambda t: f"WiFi: {state.wifi_signal}% ({state.wifi_name})", None, enabled=False),
-        pystray.MenuItem(lambda t: f"Claude: {'✓' if state.claude_running else '✗'} ({state.claude_mem}MB)", None, enabled=False),
+        pystray.MenuItem(lambda t: f"CPU: {state.cpu}%  RAM: {state.ram}%", None, enabled=False),
         pystray.MenuItem(lambda t: f"Server: {'✓ Running' if state.server_ok else '✗ Stopped'}", None, enabled=False),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("❌ Quit", quit_app)
