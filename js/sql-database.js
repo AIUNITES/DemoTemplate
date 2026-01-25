@@ -16,7 +16,7 @@ const SQLDatabase = {
   history: [],
   
   // Site identifier (used to filter users in shared database)
-  SITE_ID: 'demotemplate',
+  SITE_ID: 'DemoTemplate',
   
   // Storage keys
   STORAGE_KEY: 'demotemplate_sqldb',
@@ -1430,10 +1430,39 @@ WHERE id = 1;`,
     }
   },
   
+  // ==================== PASSWORD HASHING ====================
+  
+  /**
+   * Hash a password using SHA-256
+   * @param {string} password - Plain text password
+   * @returns {Promise<string>} - Hex-encoded hash
+   */
+  async hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+  },
+  
+  /**
+   * Verify a password against a hash
+   * @param {string} password - Plain text password to verify
+   * @param {string} hash - Stored hash to compare against
+   * @returns {Promise<boolean>} - True if password matches
+   */
+  async verifyPassword(password, hash) {
+    // Support both hashed and plain text passwords during transition
+    const hashedInput = await this.hashPassword(password);
+    return hashedInput === hash || password === hash;
+  },
+  
   // ==================== SHARED DATABASE USER METHODS ====================
   
   /**
    * Ensure users table exists with site column for multi-site support
+   * Schema matches actual DemoTemplate database
    */
   ensureUsersTable() {
     if (!this.db) return;
@@ -1442,27 +1471,18 @@ WHERE id = 1;`,
       const tableExists = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='users'");
       
       if (!tableExists.length) {
-        console.log('[SQLDatabase] Creating users table with site column...');
+        console.log('[SQLDatabase] Creating users table...');
         this.db.run(`
           CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            site TEXT NOT NULL DEFAULT 'demotemplate',
-            username TEXT NOT NULL,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            display_name TEXT,
             email TEXT,
-            password TEXT NOT NULL,
-            firstName TEXT,
-            lastName TEXT,
             role TEXT DEFAULT 'user',
-            totalScore INTEGER DEFAULT 0,
-            gamesPlayed INTEGER DEFAULT 0,
-            correctAnswers INTEGER DEFAULT 0,
-            wrongAnswers INTEGER DEFAULT 0,
-            bestStreak INTEGER DEFAULT 0,
-            badges TEXT DEFAULT '[]',
-            createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
-            lastLogin TEXT,
-            UNIQUE(site, username),
-            UNIQUE(site, email)
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            last_login TEXT,
+            site TEXT DEFAULT 'DemoTemplate'
           )
         `);
         this.autoSave();
@@ -1473,7 +1493,7 @@ WHERE id = 1;`,
         
         if (!hasSiteColumn) {
           console.log('[SQLDatabase] Adding site column to existing table...');
-          this.db.run("ALTER TABLE users ADD COLUMN site TEXT NOT NULL DEFAULT 'demotemplate'");
+          this.db.run("ALTER TABLE users ADD COLUMN site TEXT DEFAULT 'DemoTemplate'");
           this.autoSave();
         }
       }
@@ -1484,8 +1504,9 @@ WHERE id = 1;`,
   
   /**
    * Authenticate user by username/email and password (filtered by site)
+   * Supports both hashed and legacy plain-text passwords
    */
-  authenticateUser(usernameOrEmail, password) {
+  async authenticateUser(usernameOrEmail, password) {
     if (!this.db) return null;
     
     try {
@@ -1493,26 +1514,38 @@ WHERE id = 1;`,
         SELECT * FROM users 
         WHERE site = ?
         AND (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?))
-        AND password = ?
       `);
       
-      stmt.bind([this.SITE_ID, usernameOrEmail, usernameOrEmail, password]);
+      stmt.bind([this.SITE_ID, usernameOrEmail, usernameOrEmail]);
       
       if (stmt.step()) {
         const row = stmt.getAsObject();
         stmt.free();
         
-        this.db.run(`UPDATE users SET lastLogin = datetime('now') WHERE id = ?`, [row.id]);
-        this.autoSave();
+        // Verify password (supports both hashed and legacy plain-text)
+        const isValid = await this.verifyPassword(password, row.password_hash);
         
-        try {
-          row.badges = JSON.parse(row.badges || '[]');
-        } catch (e) {
-          row.badges = [];
+        if (!isValid) {
+          console.log('[SQLDatabase] Invalid password for:', usernameOrEmail);
+          return null;
         }
         
+        // Update last login
+        this.db.run(`UPDATE users SET last_login = datetime('now') WHERE id = ?`, [row.id]);
+        this.autoSave();
+        
         console.log('[SQLDatabase] Auth successful:', row.username, '(site:', row.site, ')');
-        return row;
+        
+        return {
+          id: row.id,
+          username: row.username,
+          displayName: row.display_name,
+          email: row.email,
+          role: row.role,
+          createdAt: row.created_at,
+          lastLogin: row.last_login,
+          site: row.site
+        };
       }
       
       stmt.free();
@@ -1536,12 +1569,16 @@ WHERE id = 1;`,
       if (stmt.step()) {
         const row = stmt.getAsObject();
         stmt.free();
-        try {
-          row.badges = JSON.parse(row.badges || '[]');
-        } catch (e) {
-          row.badges = [];
-        }
-        return row;
+        return {
+          id: row.id,
+          username: row.username,
+          displayName: row.display_name,
+          email: row.email,
+          role: row.role,
+          createdAt: row.created_at,
+          lastLogin: row.last_login,
+          site: row.site
+        };
       }
       stmt.free();
       return null;
@@ -1569,9 +1606,9 @@ WHERE id = 1;`,
   },
   
   /**
-   * Register new user (with site identifier)
+   * Register new user (with site identifier and hashed password)
    */
-  registerUser(userData) {
+  async registerUser(userData) {
     if (!this.db) throw new Error('Database not available');
     
     if (this.usernameExists(userData.username)) {
@@ -1579,21 +1616,19 @@ WHERE id = 1;`,
     }
     
     try {
-      const stmt = this.db.prepare(`
-        INSERT INTO users (site, username, email, password, firstName, lastName, role, badges)
-        VALUES (?, ?, ?, ?, ?, ?, 'user', '[]')
-      `);
+      const passwordHash = await this.hashPassword(userData.password);
       
-      stmt.run([
-        this.SITE_ID,
+      this.db.run(`
+        INSERT INTO users (username, password_hash, display_name, email, role, site)
+        VALUES (?, ?, ?, ?, 'user', ?)
+      `, [
         userData.username.toLowerCase(),
+        passwordHash,
+        userData.displayName || userData.username,
         userData.email?.toLowerCase() || '',
-        userData.password,
-        userData.firstName || '',
-        userData.lastName || ''
+        this.SITE_ID
       ]);
       
-      stmt.free();
       this.autoSave();
       
       console.log('[SQLDatabase] User registered:', userData.username, 'for site:', this.SITE_ID);
@@ -1605,25 +1640,54 @@ WHERE id = 1;`,
   },
   
   /**
+   * Update user's password (with hashing)
+   */
+  async updatePassword(userId, newPassword) {
+    if (!this.db) return false;
+    
+    try {
+      const passwordHash = await this.hashPassword(newPassword);
+      
+      this.db.run(`
+        UPDATE users SET password_hash = ?
+        WHERE id = ? AND site = ?
+      `, [passwordHash, userId, this.SITE_ID]);
+      
+      this.autoSave();
+      return true;
+    } catch (error) {
+      console.error('[SQLDatabase] Update password error:', error);
+      return false;
+    }
+  },
+  
+  /**
    * Get all users for this site
    */
   getAllUsersForSite() {
     if (!this.db) return [];
     
     try {
-      const result = this.db.exec(`SELECT * FROM users WHERE site = '${this.SITE_ID}' ORDER BY totalScore DESC`);
+      const result = this.db.exec(`
+        SELECT id, username, display_name, email, role, created_at, last_login, site
+        FROM users WHERE site = '${this.SITE_ID}' ORDER BY created_at DESC
+      `);
       if (!result.length) return [];
       
       const columns = result[0].columns;
       return result[0].values.map(row => {
         const user = {};
         columns.forEach((col, i) => user[col] = row[i]);
-        try {
-          user.badges = JSON.parse(user.badges || '[]');
-        } catch (e) {
-          user.badges = [];
-        }
-        return user;
+        return {
+          id: user.id,
+          username: user.username,
+          displayName: user.display_name,
+          email: user.email,
+          role: user.role,
+          createdAt: user.created_at,
+          lastLogin: user.last_login,
+          site: user.site
+        };
       });
     } catch (error) {
       console.error('[SQLDatabase] getAllUsersForSite error:', error);
