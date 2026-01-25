@@ -362,6 +362,55 @@ git push
 
 ---
 
+## Update: SQL Database Authentication Integration
+
+**Date:** January 24, 2026
+
+### Issue: Users in SQL Database Cannot Login
+
+**Problem:** Users like "john" exist in the SQL database but cannot log in because authentication only checked localStorage.
+
+**Solution:** Modified `auth.js` to check SQL database when user not found in localStorage.
+
+### Changes Made
+
+| File | Changes |
+|------|--------|
+| `js/auth.js` | Modified `login()` to check SQL database as fallback |
+
+### New Login Flow
+
+```
+1. User enters username/password
+2. Check localStorage for user
+   - If found → verify password → login
+3. If not in localStorage, check SQL database
+   - Query: SELECT * FROM users WHERE username = ?
+   - If found → verify password_hash → create localStorage session → login
+4. If not found anywhere → "User not found" error
+```
+
+### SQL Database Users Now Supported
+
+From the database:
+| username | password_hash | display_name | role |
+|----------|---------------|--------------|------|
+| admin | admin123 | Administrator | admin |
+| demo | demo123 | Demo User | user |
+| john | john456 | John Doe | user |
+| jane | jane789 | Jane Smith | user |
+
+### To Deploy
+
+```bash
+cd C:\Users\Tom\Documents\GitHub\DemoTemplate
+git add .
+git commit -m "Add SQL database authentication support"
+git push
+```
+
+---
+
 *Log updated: January 24, 2026*
 
 ---

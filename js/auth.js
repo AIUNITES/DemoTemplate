@@ -41,24 +41,64 @@ const Auth = {
 
   /**
    * Login user
+   * Checks localStorage first, then SQL database if available
    */
   login(username, password) {
     if (!username || !password) {
       throw new Error('Please enter username and password');
     }
 
-    const user = Storage.getUserByUsername(username);
+    // First, try localStorage (original behavior)
+    let user = Storage.getUserByUsername(username);
     
-    if (!user) {
-      throw new Error('User not found');
+    if (user) {
+      // Found in localStorage - check password
+      if (user.password !== password) {
+        throw new Error('Incorrect password');
+      }
+      Storage.setCurrentUser(user.username);
+      return user;
     }
-
-    if (user.password !== password) {
-      throw new Error('Incorrect password');
+    
+    // Not found in localStorage - try SQL database if available
+    if (typeof SQLDatabase !== 'undefined' && SQLDatabase.isLoaded && SQLDatabase.db) {
+      try {
+        const result = SQLDatabase.db.exec(
+          `SELECT * FROM users WHERE username = '${username.toLowerCase().replace(/'/g, "''")}' LIMIT 1`
+        );
+        
+        if (result.length > 0 && result[0].values.length > 0) {
+          const columns = result[0].columns;
+          const row = result[0].values[0];
+          const dbUser = {};
+          columns.forEach((col, i) => dbUser[col] = row[i]);
+          
+          // Check password (stored as password_hash in DB)
+          const dbPassword = dbUser.password_hash || dbUser.password || '';
+          if (dbPassword !== password) {
+            throw new Error('Incorrect password');
+          }
+          
+          // Create localStorage user from DB user for session
+          user = Storage.createUser({
+            displayName: dbUser.display_name || dbUser.displayName || username,
+            username: dbUser.username,
+            email: dbUser.email || '',
+            password: password,
+            isAdmin: dbUser.role === 'admin'
+          });
+          
+          console.log('[Auth] User authenticated from SQL database:', username);
+          Storage.setCurrentUser(user.username);
+          return user;
+        }
+      } catch (dbError) {
+        console.warn('[Auth] SQL database lookup failed:', dbError.message);
+        // Fall through to "User not found"
+      }
     }
-
-    Storage.setCurrentUser(user.username);
-    return user;
+    
+    throw new Error('User not found');
   },
 
   /**
