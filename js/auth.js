@@ -63,15 +63,15 @@ const Auth = {
     // Not found in localStorage - try SQL database if available
     if (typeof SQLDatabase !== 'undefined' && SQLDatabase.isLoaded && SQLDatabase.db) {
       try {
-        const result = SQLDatabase.db.exec(
-          `SELECT * FROM users WHERE username = '${username.toLowerCase().replace(/'/g, "''")}' LIMIT 1`
+        // Use parameterized query to prevent SQL injection
+        const stmt = SQLDatabase.db.prepare(
+          `SELECT * FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1`
         );
+        stmt.bind([username]);
         
-        if (result.length > 0 && result[0].values.length > 0) {
-          const columns = result[0].columns;
-          const row = result[0].values[0];
-          const dbUser = {};
-          columns.forEach((col, i) => dbUser[col] = row[i]);
+        if (stmt.step()) {
+          const dbUser = stmt.getAsObject();
+          stmt.free();
           
           // Check password (stored as password_hash in DB)
           const dbPassword = dbUser.password_hash || dbUser.password || '';
@@ -91,6 +91,8 @@ const Auth = {
           console.log('[Auth] User authenticated from SQL database:', username);
           Storage.setCurrentUser(user.username);
           return user;
+        } else {
+          stmt.free(); // Clean up prepared statement
         }
       } catch (dbError) {
         console.warn('[Auth] SQL database lookup failed:', dbError.message);

@@ -698,59 +698,6 @@ if __name__ == '__main__':
   },
   
   /**
-   * Download file watcher script (PowerShell)
-   */
-  downloadWatcherScript() {
-    const content = `# DemoTemplate Database File Watcher (PowerShell)
-# Watches for changes to database.db and syncs to GitHub
-# Run: .\\db-watcher.ps1
-
-$DB_PATH = "database.db"
-$REPO_PATH = "."  # Your git repo path
-$CHECK_INTERVAL = 5  # Seconds between checks
-
-$lastHash = $null
-
-Write-Host "🔍 Database File Watcher Started" -ForegroundColor Cyan
-Write-Host "Watching: $DB_PATH"
-Write-Host "Press Ctrl+C to stop"
-Write-Host ""
-
-while ($true) {
-    if (Test-Path $DB_PATH) {
-        $currentHash = (Get-FileHash $DB_PATH -Algorithm MD5).Hash
-        
-        if ($lastHash -ne $null -and $currentHash -ne $lastHash) {
-            Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Change detected, syncing..." -ForegroundColor Yellow
-            
-            try {
-                Set-Location $REPO_PATH
-                git add $DB_PATH
-                git commit -m "Auto-sync database [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')]"
-                git push
-                Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Synced successfully!" -ForegroundColor Green
-            } catch {
-                Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sync failed: $_" -ForegroundColor Red
-            }
-        }
-        
-        $lastHash = $currentHash
-    }
-    
-    Start-Sleep -Seconds $CHECK_INTERVAL
-}
-`;
-    
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'db-watcher.ps1';
-    a.click();
-    URL.revokeObjectURL(url);
-  },
-  
-  /**
    * Bind UI events
    */
   bindEvents() {
@@ -774,10 +721,6 @@ while ($true) {
     
     document.getElementById('download-server-py')?.addEventListener('click', () => {
       this.downloadServerScript('python');
-    });
-    
-    document.getElementById('download-watcher-ps')?.addEventListener('click', () => {
-      this.downloadWatcherScript();
     });
     
     // Browser card click
