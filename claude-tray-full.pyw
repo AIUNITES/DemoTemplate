@@ -23,9 +23,14 @@ except ImportError:
     from PIL import Image, ImageDraw, ImageFont
     import psutil
 
+import re
+from datetime import datetime, timedelta
+
 # Config
 SERVER_PORT = 8000
 SERVER_DIR = r"C:\Users\Tom\Documents\GitHub\DemoTemplate"
+PUBLISH_LOG = r"C:\Users\Tom\Documents\GitHub\scripts\publish-log.txt"
+PUSH_INTERVAL_MINUTES = 10
 
 # State
 class State:
@@ -41,8 +46,73 @@ class State:
     server_ok = False
     net_down = 0
     net_up = 0
+    # Auto-publish tracking
+    last_push_time = None
+    last_push_repo = None
+    last_run_time = None
 
 state = State()
+
+def parse_publish_log():
+    """Parse publish-log.txt for last push info"""
+    try:
+        with open(PUBLISH_LOG, 'r') as f:
+            content = f.read()
+        
+        # Find all run timestamps
+        runs = re.findall(r'=== Auto-Publish Run: (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ===', content)
+        
+        # Find last actual push (not just "No changes")
+        pushes = re.findall(r'=== Auto-Publish Run: (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ===.*?\[([^\]]+)\] Pushed changes', content, re.DOTALL)
+        
+        if runs:
+            state.last_run_time = datetime.strptime(runs[-1], "%Y-%m-%d %H:%M:%S")
+        
+        if pushes:
+            state.last_push_time = datetime.strptime(pushes[-1][0], "%Y-%m-%d %H:%M:%S")
+            state.last_push_repo = pushes[-1][1]
+    except:
+        pass
+
+def get_next_push_time():
+    """Calculate next scheduled push time (every 10 min at :00, :10, :20, etc.)"""
+    now = datetime.now()
+    minutes = now.minute
+    next_interval = ((minutes // PUSH_INTERVAL_MINUTES) + 1) * PUSH_INTERVAL_MINUTES
+    
+    if next_interval >= 60:
+        return now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    else:
+        return now.replace(minute=next_interval, second=0, microsecond=0)
+
+def time_ago(dt):
+    """Format datetime as 'X min ago'"""
+    if not dt:
+        return "Unknown"
+    
+    diff = datetime.now() - dt
+    minutes = int(diff.total_seconds() / 60)
+    
+    if minutes < 1:
+        return "Just now"
+    elif minutes < 60:
+        return f"{minutes} min ago"
+    else:
+        hours = minutes // 60
+        return f"{hours}h ago"
+
+def time_until(dt):
+    """Format datetime as 'in X min'"""
+    if not dt:
+        return "Unknown"
+    
+    diff = dt - datetime.now()
+    minutes = int(diff.total_seconds() / 60)
+    
+    if minutes < 1:
+        return "Now"
+    else:
+        return f"in {minutes} min"
 
 def get_wifi_info():
     """Get WiFi signal strength and name on Windows"""
