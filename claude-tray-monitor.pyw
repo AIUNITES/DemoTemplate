@@ -61,7 +61,7 @@ def get_wifi_signal():
     except:
         return "N/A"
 
-def check_server_running(port=8080):
+def check_server_running(port=8000):
     """Check if local server is running"""
     try:
         import socket
@@ -101,7 +101,7 @@ def update_stats():
             state.claude_mem = sum(p.info['memory_info'].rss for p in claude_procs) // (1024**2) if claude_procs else 0
             
             # Local server
-            state.server_running = check_server_running(8080)
+            state.server_running = check_server_running(8000)
             
             # Check for alerts
             state.alerts = []
@@ -214,23 +214,23 @@ def on_start_server(icon, item):
     
     # Start Python HTTP server
     subprocess.Popen(
-        ["python", "-m", "http.server", "8080", "--bind", "127.0.0.1"],
+        ["python", "-m", "http.server", "8000", "--bind", "127.0.0.1"],
         cwd=server_path,
         creationflags=subprocess.CREATE_NO_WINDOW
     )
     
     time.sleep(2)
-    state.server_running = check_server_running(8080)
+    state.server_running = check_server_running(8000)
 
 def on_stop_server(icon, item):
     """Stop the local development server"""
     import subprocess
     try:
-        # Find and kill Python HTTP server on port 8080
+        # Find and kill Python HTTP server on port 8000
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
                 cmdline = proc.info.get('cmdline') or []
-                if 'python' in str(cmdline).lower() and 'http.server' in str(cmdline) and '8080' in str(cmdline):
+                if 'python' in str(cmdline).lower() and 'http.server' in str(cmdline) and '8000' in str(cmdline):
                     proc.kill()
             except:
                 pass
@@ -241,7 +241,7 @@ def on_stop_server(icon, item):
 def on_open_browser(icon, item):
     """Open DemoTemplate in browser"""
     import webbrowser
-    webbrowser.open('http://127.0.0.1:8080')
+    webbrowser.open('http://127.0.0.1:8000')
 
 def on_show_details(icon, item):
     """Show detailed status window"""

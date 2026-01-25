@@ -1,6 +1,10 @@
-' Start DemoTemplate Server Silently
-' Double-click this file to start the server with no window
-' The server runs at http://127.0.0.1:8080
+' DemoTemplate Silent Server Launcher
+' Double-click to start local server on port 8000 (no window)
+' To stop: Open Task Manager and end "python.exe" process
 
 Set objShell = CreateObject("WScript.Shell")
-objShell.Run "pythonw ""C:\Users\Tom\Documents\GitHub\DemoTemplate\silent-server.pyw""", 0, False
+strPath = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
+
+objShell.Run "cmd /c cd /d """ & strPath & """ && python -m http.server 8000 --bind 127.0.0.1", 0, False
+
+MsgBox "Server started at http://localhost:8000" & vbCrLf & vbCrLf & "To stop: End python.exe in Task Manager", vbInformation, "DemoTemplate Server"

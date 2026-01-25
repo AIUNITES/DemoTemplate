@@ -24,7 +24,7 @@ except ImportError:
     import psutil
 
 # Config
-SERVER_PORT = 8080
+SERVER_PORT = 8000
 SERVER_DIR = r"C:\Users\Tom\Documents\GitHub\DemoTemplate"
 
 # State
