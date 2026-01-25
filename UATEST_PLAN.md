@@ -7,8 +7,8 @@
 | **Repository** | DemoTemplate |
 | **Live URL** | https://aiunites.github.io/DemoTemplate/ |
 | **Local Path** | C:/Users/Tom/Documents/GitHub/DemoTemplate |
-| **Last Updated** | January 24, 2026 |
-| **Version** | 1.0.0 |
+| **Last Updated** | January 25, 2026 |
+| **Version** | 1.1.0 |
 | **Purpose** | Reusable template for building AIUNITES web apps |
 
 ---
@@ -107,6 +107,28 @@
 | Max Items per User Input | ✅ | Default 100 |
 | Maintenance Mode Toggle | ✅ | |
 | Save Settings Button | ✅ | |
+| **Data Sources Tab** | ✅ | |
+| localStorage (Default) | ✅ | Browser storage |
+| Google Sheets Config | ✅ | Form + Apps Script |
+| GitHub Gist Config | ✅ | Version controlled |
+| GitHub Repo Config | ✅ | JSON in repo |
+| JSONbin.io Config | ✅ | Free JSON API |
+| npoint.io Config | ✅ | No auth needed |
+| **SQL Database Tab** | ✅ | |
+| Database Location Cards | ✅ | Browser, Local Server, GitHub Sync, Supabase, Turso |
+| New Database Button | ✅ | Creates empty db |
+| Load .db File | ✅ | File upload |
+| Save to File | ✅ | Download .db |
+| **Save to GitHub** | ✅ | Push to AIUNITES/AIUNITES-database-sync |
+| **Load from GitHub** | ✅ | Pull shared database |
+| **Token Prompt** | ✅ | Prompts if no token saved |
+| **Token Save Option** | ✅ | Offers to save for future |
+| Tables List | ✅ | Click to SELECT * |
+| SQL Query Panel | ✅ | Textarea for queries |
+| Run Query Button | ✅ | Executes SQL |
+| Results Display | ✅ | Table format |
+| Query History | ✅ | Clickable history |
+| Create Table Button | ✅ | Dialog prompt |
 | **Users Tab** | ✅ | |
 | User Count | ✅ | |
 | User List | ✅ | Avatar, name, username, admin badge |
@@ -197,6 +219,8 @@
 | config.js | App configuration | ✅ |
 | storage.js | localStorage wrapper | ✅ |
 | auth.js | Authentication logic | ✅ |
+| datasource.js | Data source management | ✅ |
+| sql-database.js | SQLite database + GitHub sync | ✅ |
 | app.js | Main app logic | ✅ |
 
 ---
@@ -256,6 +280,27 @@
 - [ ] Admin tabs switch
 - [ ] Legal modal shows correct content
 
+### SQL Database Tests
+- [ ] New Database creates empty db
+- [ ] Load .db file works
+- [ ] Save to File downloads .db
+- [ ] Tables list shows after create
+- [ ] Click table runs SELECT *
+- [ ] Run custom SQL query
+- [ ] Query history populates
+- [ ] Click history item loads query
+- [ ] Create Table dialog works
+
+### GitHub Sync Tests
+- [ ] Load from GitHub fetches database
+- [ ] Save to GitHub prompts for token if not saved
+- [ ] Token save option stores in localStorage
+- [ ] Save to GitHub pushes to AIUNITES/AIUNITES-database-sync
+- [ ] Database location card shows GitHub Sync option
+- [ ] Configure GitHub Sync modal opens
+- [ ] Test Connection validates credentials
+- [ ] Auto-load from GitHub works on live site (non-localhost)
+
 ---
 
 ## Sites Based on DemoTemplate
@@ -281,8 +326,9 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | Jan 25, 2026 | Added GitHub Sync for shared AIUNITES database, token management |
 | 1.0.0 | Jan 2026 | Initial complete template |
 
 ---
 
-*Last tested: January 24, 2026*
+*Last tested: January 25, 2026*
