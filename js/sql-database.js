@@ -1696,6 +1696,40 @@ WHERE id = 1;`,
   },
   
   /**
+   * Get ALL users from ALL sites (for admin panel)
+   */
+  getAllUsersAllSites() {
+    if (!this.db) return [];
+    
+    try {
+      const result = this.db.exec(`
+        SELECT id, username, display_name, email, role, created_at, last_login, site
+        FROM users ORDER BY site ASC, username ASC
+      `);
+      if (!result.length) return [];
+      
+      const columns = result[0].columns;
+      return result[0].values.map(row => {
+        const user = {};
+        columns.forEach((col, i) => user[col] = row[i]);
+        return {
+          id: user.id,
+          username: user.username,
+          displayName: user.display_name,
+          email: user.email,
+          role: user.role,
+          createdAt: user.created_at,
+          lastLogin: user.last_login,
+          site: user.site
+        };
+      });
+    } catch (error) {
+      console.error('[SQLDatabase] getAllUsersAllSites error:', error);
+      return [];
+    }
+  },
+  
+  /**
    * Get database status including site user count
    */
   getSiteStatus() {
