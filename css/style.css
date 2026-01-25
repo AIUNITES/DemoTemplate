@@ -470,6 +470,34 @@ h4 { font-size: 1rem; }
   min-height: 1.25rem;
 }
 
+/* Password Toggle Eye Button */
+.password-toggle {
+  position: relative;
+}
+
+.password-toggle input {
+  padding-right: 3rem;
+}
+
+.password-toggle .toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--gray-light);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0;
+  line-height: 1;
+  transition: var(--transition);
+}
+
+.password-toggle .toggle-btn:hover {
+  color: var(--white);
+}
+
 .form-hint {
   display: block;
   margin-top: 0.5rem;

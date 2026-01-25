@@ -3,6 +3,22 @@
  * UI logic, event handlers, and app state management
  */
 
+/**
+ * Toggle password visibility
+ * @param {string} inputId - The ID of the password input
+ * @param {HTMLElement} btn - The toggle button element
+ */
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
 const App = {
   state: {
     currentItem: null,

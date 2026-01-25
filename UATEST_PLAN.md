@@ -47,6 +47,7 @@
 | **SQL Database Auth** | ✅ | Uses SQLite via sql.js |
 | **Site-Filtered Users** | ✅ | Users filtered by SITE_ID |
 | **Password Hashing** | ✅ | SHA-256 hashing |
+| **Password Visibility Toggle** | ✅ | Eye button on password fields |
 
 ### 🗄️ SQL Database System
 | Feature | Status | Notes |
@@ -254,6 +255,8 @@
 - [ ] First user gets admin role
 - [ ] Reset app link works (with password)
 - [ ] Terms checkbox required
+- [ ] Password eye toggle shows/hides password
+- [ ] Eye icon changes when toggled (👁️ ↔ 🙈)
 
 ### Dashboard Tests
 - [ ] User info displays
