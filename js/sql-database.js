@@ -36,6 +36,47 @@ const SQLDatabase = {
     autoSync: false
   },
   
+  // ==================== SIMPLE TOKEN MANAGEMENT ====================
+  
+  /**
+   * Set GitHub token (stored in localStorage for easy access)
+   */
+  setGitHubToken(token) {
+    if (token) {
+      localStorage.setItem('github_token', token);
+      // Also update locationConfig for compatibility
+      if (!this.locationConfig.githubSync) {
+        this.locationConfig.githubSync = { ...this.DEFAULT_GITHUB_CONFIG };
+      }
+      this.locationConfig.githubSync.token = token;
+      this.saveLocationConfig();
+      console.log('[SQLDatabase] GitHub token saved');
+    } else {
+      localStorage.removeItem('github_token');
+      if (this.locationConfig.githubSync) {
+        this.locationConfig.githubSync.token = '';
+        this.saveLocationConfig();
+      }
+    }
+  },
+  
+  /**
+   * Check if GitHub token is configured
+   */
+  hasGitHubToken() {
+    return !!localStorage.getItem('github_token') || 
+           !!(this.locationConfig.githubSync && this.locationConfig.githubSync.token);
+  },
+  
+  /**
+   * Get GitHub token from any source
+   */
+  getGitHubToken() {
+    return localStorage.getItem('github_token') || 
+           (this.locationConfig.githubSync && this.locationConfig.githubSync.token) || 
+           '';
+  },
+  
   // Database location types
   LOCATIONS: {
     browser: { name: 'Browser', icon: '💻', requiresConfig: false },
@@ -898,31 +939,44 @@ while ($true) {
   /**
    * Save database to GitHub repository
    */
-  async saveToGitHub() {
+  async saveToGitHub(tokenOverride) {
     if (!this.db) {
       alert('No database to save');
-      return;
+      return false;
     }
     
-    const config = this.locationConfig.githubSync;
-    if (!config || !config.owner || !config.repo || !config.token) {
-      alert('Please configure GitHub Sync first (click Configure on GitHub Sync card)');
-      return;
+    // Get token from multiple sources
+    let token = tokenOverride || this.getGitHubToken();
+    
+    if (!token) {
+      token = prompt('Enter your GitHub Personal Access Token (needs repo write access):');
+      if (!token) {
+        if (typeof showToast === 'function') {
+          showToast('GitHub token required', 'error');
+        }
+        return false;
+      }
+      // Offer to save for future use
+      if (confirm('Save token for future use? (stored in localStorage)')) {
+        this.setGitHubToken(token);
+      }
     }
     
     try {
-      // Export database to base64
-      const data = this.db.export();
-      const base64 = btoa(String.fromCharCode.apply(null, data));
-      
+      // Use config or defaults
+      const config = this.locationConfig.githubSync || this.DEFAULT_GITHUB_CONFIG;
       const path = config.path || 'data/app.db';
       const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${path}`;
       
-      // Check if file exists (to get SHA for update)
+      if (typeof showToast === 'function') {
+        showToast('Saving to GitHub...', 'info');
+      }
+      
+      // Get current file SHA (required for updates)
       let sha = null;
       try {
         const existingResp = await fetch(apiUrl, {
-          headers: { 'Authorization': `token ${config.token}` }
+          headers: { 'Authorization': `token ${token}` }
         });
         if (existingResp.ok) {
           const existing = await existingResp.json();
@@ -932,9 +986,13 @@ while ($true) {
         // File doesn't exist, that's ok
       }
       
+      // Export database to base64
+      const data = this.db.export();
+      const base64 = btoa(String.fromCharCode.apply(null, data));
+      
       // Create or update file
       const body = {
-        message: `Update database [${new Date().toISOString()}]`,
+        message: `Update database from ${this.SITE_ID} - ${new Date().toISOString()}`,
         content: base64,
         branch: config.branch || 'main'
       };
@@ -943,7 +1001,7 @@ while ($true) {
       const resp = await fetch(apiUrl, {
         method: 'PUT',
         headers: {
-          'Authorization': `token ${config.token}`,
+          'Authorization': `token ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(body)
@@ -954,6 +1012,7 @@ while ($true) {
           showToast('🐙 Database saved to GitHub!', 'success');
         }
         console.log('[SQLDatabase] Saved to GitHub:', path);
+        return true;
       } else {
         const error = await resp.json();
         throw new Error(error.message || 'GitHub API error');
@@ -961,7 +1020,12 @@ while ($true) {
       
     } catch (error) {
       console.error('[SQLDatabase] GitHub save error:', error);
-      alert('Error saving to GitHub: ' + error.message);
+      if (typeof showToast === 'function') {
+        showToast('Error saving to GitHub: ' + error.message, 'error');
+      } else {
+        alert('Error saving to GitHub: ' + error.message);
+      }
+      return false;
     }
   },
   

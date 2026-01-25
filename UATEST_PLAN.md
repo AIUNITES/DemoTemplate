@@ -36,14 +36,34 @@
 ### 🔐 Authentication System
 | Feature | Status | Notes |
 |---------|--------|-------|
-| User Registration | ✅ | Creates account in localStorage |
-| User Login | ✅ | Validates credentials |
+| User Registration | ✅ | Creates account in SQL database |
+| User Login | ✅ | Validates credentials (supports hashed passwords) |
 | Demo Mode Login | ✅ | Quick login button |
 | Logout | ✅ | Clears session |
 | First User = Admin | ✅ | Auto-assigns admin role |
 | Auto-create Demo Users | ✅ | On first load |
 | Terms/Privacy Agreement | ✅ | Checkbox on signup |
 | Reset App Link | ✅ | With admin password |
+| **SQL Database Auth** | ✅ | Uses SQLite via sql.js |
+| **Site-Filtered Users** | ✅ | Users filtered by SITE_ID |
+| **Password Hashing** | ✅ | SHA-256 hashing |
+
+### 🗄️ SQL Database System
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **SQL.js Integration** | ✅ | Browser-based SQLite |
+| **Auto-load from GitHub** | ✅ | Loads AIUNITES shared database on non-localhost |
+| **Load from GitHub** | ✅ | Manual button to fetch latest |
+| **Save to GitHub** | ✅ | Push database with token |
+| **GitHub Token Management** | ✅ | setGitHubToken/hasGitHubToken methods |
+| **Token Prompt on Save** | ✅ | Prompts if no token, offers to save |
+| **Save to File** | ✅ | Download .db file |
+| **Load from File** | ✅ | Upload .db file |
+| **Auto-save to localStorage** | ✅ | Caches database locally |
+| **Site Column Support** | ✅ | Multi-site user filtering |
+| **Run SQL Queries** | ✅ | Query panel in UI |
+| **Table Browser** | ✅ | View/manage tables |
+| **Query History** | ✅ | Saved in localStorage |
 
 ### 👤 User Dropdown Menu
 | Feature | Status | Notes |
