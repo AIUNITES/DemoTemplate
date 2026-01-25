@@ -15,8 +15,8 @@ const SQLDatabase = {
   SQL: null,
   history: [],
   
-  // App identifier for this site (used to filter users in shared database)
-  APP_ID: 'demotemplate',
+  // Site identifier (used to filter users in shared database)
+  SITE_ID: 'demotemplate',
   
   // Storage keys
   STORAGE_KEY: 'demotemplate_sqldb',
@@ -1433,7 +1433,7 @@ WHERE id = 1;`,
   // ==================== SHARED DATABASE USER METHODS ====================
   
   /**
-   * Ensure users table exists with app column for multi-site support
+   * Ensure users table exists with site column for multi-site support
    */
   ensureUsersTable() {
     if (!this.db) return;
@@ -1442,11 +1442,11 @@ WHERE id = 1;`,
       const tableExists = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='users'");
       
       if (!tableExists.length) {
-        console.log('[SQLDatabase] Creating users table with app column...');
+        console.log('[SQLDatabase] Creating users table with site column...');
         this.db.run(`
           CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            app TEXT NOT NULL DEFAULT 'demotemplate',
+            site TEXT NOT NULL DEFAULT 'demotemplate',
             username TEXT NOT NULL,
             email TEXT,
             password TEXT NOT NULL,
@@ -1461,19 +1461,19 @@ WHERE id = 1;`,
             badges TEXT DEFAULT '[]',
             createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
             lastLogin TEXT,
-            UNIQUE(app, username),
-            UNIQUE(app, email)
+            UNIQUE(site, username),
+            UNIQUE(site, email)
           )
         `);
         this.autoSave();
       } else {
-        // Check if app column exists
+        // Check if site column exists
         const columns = this.db.exec("PRAGMA table_info(users)");
-        const hasAppColumn = columns[0]?.values.some(col => col[1] === 'app');
+        const hasSiteColumn = columns[0]?.values.some(col => col[1] === 'site');
         
-        if (!hasAppColumn) {
-          console.log('[SQLDatabase] Adding app column to existing table...');
-          this.db.run("ALTER TABLE users ADD COLUMN app TEXT NOT NULL DEFAULT 'demotemplate'");
+        if (!hasSiteColumn) {
+          console.log('[SQLDatabase] Adding site column to existing table...');
+          this.db.run("ALTER TABLE users ADD COLUMN site TEXT NOT NULL DEFAULT 'demotemplate'");
           this.autoSave();
         }
       }
@@ -1483,7 +1483,7 @@ WHERE id = 1;`,
   },
   
   /**
-   * Authenticate user by username/email and password (filtered by app)
+   * Authenticate user by username/email and password (filtered by site)
    */
   authenticateUser(usernameOrEmail, password) {
     if (!this.db) return null;
@@ -1491,12 +1491,12 @@ WHERE id = 1;`,
     try {
       const stmt = this.db.prepare(`
         SELECT * FROM users 
-        WHERE app = ?
+        WHERE site = ?
         AND (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?))
         AND password = ?
       `);
       
-      stmt.bind([this.APP_ID, usernameOrEmail, usernameOrEmail, password]);
+      stmt.bind([this.SITE_ID, usernameOrEmail, usernameOrEmail, password]);
       
       if (stmt.step()) {
         const row = stmt.getAsObject();
@@ -1511,7 +1511,7 @@ WHERE id = 1;`,
           row.badges = [];
         }
         
-        console.log('[SQLDatabase] Auth successful:', row.username, '(app:', row.app, ')');
+        console.log('[SQLDatabase] Auth successful:', row.username, '(site:', row.site, ')');
         return row;
       }
       
@@ -1524,14 +1524,14 @@ WHERE id = 1;`,
   },
   
   /**
-   * Get user by username (filtered by app)
+   * Get user by username (filtered by site)
    */
   getUserByUsername(username) {
     if (!this.db) return null;
     
     try {
-      const stmt = this.db.prepare(`SELECT * FROM users WHERE app = ? AND LOWER(username) = LOWER(?)`);
-      stmt.bind([this.APP_ID, username]);
+      const stmt = this.db.prepare(`SELECT * FROM users WHERE site = ? AND LOWER(username) = LOWER(?)`);
+      stmt.bind([this.SITE_ID, username]);
       
       if (stmt.step()) {
         const row = stmt.getAsObject();
@@ -1552,13 +1552,13 @@ WHERE id = 1;`,
   },
   
   /**
-   * Check if username exists (within this app)
+   * Check if username exists (within this site)
    */
   usernameExists(username) {
     if (!this.db) return false;
     try {
-      const stmt = this.db.prepare(`SELECT COUNT(*) FROM users WHERE app = ? AND LOWER(username) = LOWER(?)`);
-      stmt.bind([this.APP_ID, username]);
+      const stmt = this.db.prepare(`SELECT COUNT(*) FROM users WHERE site = ? AND LOWER(username) = LOWER(?)`);
+      stmt.bind([this.SITE_ID, username]);
       stmt.step();
       const count = stmt.get()[0];
       stmt.free();
@@ -1569,7 +1569,7 @@ WHERE id = 1;`,
   },
   
   /**
-   * Register new user (with app identifier)
+   * Register new user (with site identifier)
    */
   registerUser(userData) {
     if (!this.db) throw new Error('Database not available');
@@ -1580,12 +1580,12 @@ WHERE id = 1;`,
     
     try {
       const stmt = this.db.prepare(`
-        INSERT INTO users (app, username, email, password, firstName, lastName, role, badges)
+        INSERT INTO users (site, username, email, password, firstName, lastName, role, badges)
         VALUES (?, ?, ?, ?, ?, ?, 'user', '[]')
       `);
       
       stmt.run([
-        this.APP_ID,
+        this.SITE_ID,
         userData.username.toLowerCase(),
         userData.email?.toLowerCase() || '',
         userData.password,
@@ -1596,7 +1596,7 @@ WHERE id = 1;`,
       stmt.free();
       this.autoSave();
       
-      console.log('[SQLDatabase] User registered:', userData.username, 'for app:', this.APP_ID);
+      console.log('[SQLDatabase] User registered:', userData.username, 'for site:', this.SITE_ID);
       return this.getUserByUsername(userData.username);
     } catch (error) {
       console.error('[SQLDatabase] Register error:', error);
@@ -1605,13 +1605,13 @@ WHERE id = 1;`,
   },
   
   /**
-   * Get all users for this app
+   * Get all users for this site
    */
-  getAllUsersForApp() {
+  getAllUsersForSite() {
     if (!this.db) return [];
     
     try {
-      const result = this.db.exec(`SELECT * FROM users WHERE app = '${this.APP_ID}' ORDER BY totalScore DESC`);
+      const result = this.db.exec(`SELECT * FROM users WHERE site = '${this.SITE_ID}' ORDER BY totalScore DESC`);
       if (!result.length) return [];
       
       const columns = result[0].columns;
@@ -1626,33 +1626,33 @@ WHERE id = 1;`,
         return user;
       });
     } catch (error) {
-      console.error('[SQLDatabase] getAllUsersForApp error:', error);
+      console.error('[SQLDatabase] getAllUsersForSite error:', error);
       return [];
     }
   },
   
   /**
-   * Get database status including app user count
+   * Get database status including site user count
    */
-  getAppStatus() {
-    if (!this.db) return { loaded: false, hasDatabase: false, userCount: 0, app: this.APP_ID };
+  getSiteStatus() {
+    if (!this.db) return { loaded: false, hasDatabase: false, userCount: 0, site: this.SITE_ID };
     
     try {
       const totalResult = this.db.exec("SELECT COUNT(*) FROM users");
       const totalCount = totalResult[0]?.values[0]?.[0] || 0;
       
-      const appResult = this.db.exec(`SELECT COUNT(*) FROM users WHERE app = '${this.APP_ID}'`);
-      const appCount = appResult[0]?.values[0]?.[0] || 0;
+      const siteResult = this.db.exec(`SELECT COUNT(*) FROM users WHERE site = '${this.SITE_ID}'`);
+      const siteCount = siteResult[0]?.values[0]?.[0] || 0;
       
       return {
         loaded: this.isLoaded,
         hasDatabase: true,
-        userCount: appCount,
+        userCount: siteCount,
         totalUsers: totalCount,
-        app: this.APP_ID
+        site: this.SITE_ID
       };
     } catch (error) {
-      return { loaded: this.isLoaded, hasDatabase: !!this.db, userCount: 0, app: this.APP_ID };
+      return { loaded: this.isLoaded, hasDatabase: !!this.db, userCount: 0, site: this.SITE_ID };
     }
   }
 };
