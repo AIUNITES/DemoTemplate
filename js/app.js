@@ -192,8 +192,8 @@ const App = {
       }
     });
 
-    // Admin panel
-    document.getElementById('admin-link')?.addEventListener('click', (e) => this.openAdminPanel(e));
+    // Admin panel - Now links to admin.html page
+    // document.getElementById('admin-link')?.addEventListener('click', (e) => this.openAdminPanel(e));
     document.getElementById('close-admin-modal')?.addEventListener('click', () => this.closeAdminModal());
     document.querySelectorAll('.admin-tab').forEach(tab => {
       tab.addEventListener('click', (e) => this.switchAdminTab(e.target.dataset.adminTab));
