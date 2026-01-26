@@ -152,7 +152,8 @@ const App = {
       this.toggleUserMenu();
     });
     document.getElementById('logout-link')?.addEventListener('click', (e) => this.handleLogout(e));
-    document.getElementById('settings-link')?.addEventListener('click', (e) => this.openSettings(e));
+    // Settings is now a page (settings.html), not a modal
+    // document.getElementById('settings-link')?.addEventListener('click', (e) => this.openSettings(e));
 
     // Dashboard navigation
     document.querySelectorAll('.nav-tab[data-view]').forEach(tab => {
