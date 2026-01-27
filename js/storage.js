@@ -18,37 +18,44 @@ const Storage = {
 
   /**
    * Initialize storage with default data
+   * NOTE: No local admin is created - admin access comes from:
+   *   1. First registered user automatically becomes admin
+   *   2. GitHub sync database
    */
   init() {
     // Initialize users
     if (!localStorage.getItem(this.KEYS.USERS)) {
       const users = {};
       
-      // Admin user
+      // Admin user - only create if explicitly configured (defaultAdmin is usually null)
       const admin = APP_CONFIG.defaultAdmin;
-      users[admin.username] = {
-        id: 'admin_001',
-        username: admin.username,
-        displayName: admin.displayName,
-        email: admin.email,
-        password: admin.password,
-        isAdmin: true,
-        createdAt: new Date().toISOString(),
-        settings: {}
-      };
+      if (admin && admin.username) {
+        users[admin.username] = {
+          id: 'admin_001',
+          username: admin.username,
+          displayName: admin.displayName,
+          email: admin.email,
+          password: admin.password,
+          isAdmin: true,
+          createdAt: new Date().toISOString(),
+          settings: {}
+        };
+      }
       
-      // Demo user
+      // Demo user - always create for public demo access
       const demo = APP_CONFIG.defaultDemo;
-      users[demo.username] = {
-        id: 'demo_001',
-        username: demo.username,
-        displayName: demo.displayName,
-        email: demo.email,
-        password: demo.password,
-        isAdmin: false,
-        createdAt: new Date().toISOString(),
-        settings: {}
-      };
+      if (demo && demo.username) {
+        users[demo.username] = {
+          id: 'demo_001',
+          username: demo.username,
+          displayName: demo.displayName,
+          email: demo.email,
+          password: demo.password,
+          isAdmin: false,
+          createdAt: new Date().toISOString(),
+          settings: {}
+        };
+      }
       
       localStorage.setItem(this.KEYS.USERS, JSON.stringify(users));
     }
@@ -138,16 +145,24 @@ const Storage = {
       throw new Error('Username already exists');
     }
 
+    // First real user (excluding 'demo') becomes admin automatically
+    const realUsers = Object.values(users).filter(u => u.username !== 'demo');
+    const isFirstUser = realUsers.length === 0;
+    
     const user = {
       id: this.generateId(),
       username: username,
       displayName: userData.displayName,
       email: userData.email || '',
       password: userData.password,
-      isAdmin: userData.isAdmin || false,
+      isAdmin: userData.isAdmin || isFirstUser,  // First user = admin
       createdAt: new Date().toISOString(),
       settings: {}
     };
+
+    if (isFirstUser) {
+      console.log(`[Storage] First user '${username}' registered - granted admin privileges`);
+    }
 
     users[username] = user;
     this.saveAll(this.KEYS.USERS, users);

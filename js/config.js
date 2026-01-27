@@ -172,20 +172,21 @@ const APP_CONFIG = {
 
   // ============================================
   // DEFAULT USERS
-  // NOTE: These are local fallback users only.
-  // For shared admin access, use GitHub sync database.
+  // NOTE: These credentials are visible in source code.
+  // For static sites, this is unavoidable - "auth" is UX, not security.
+  // Real security would require a backend server.
   // ============================================
   defaultAdmin: {
-    username: 'localadmin',
-    password: 'Aiu2026!LocalDev',
-    displayName: 'Local Admin',
-    email: 'localadmin@example.com',
+    username: 'admin',
+    password: 'admin',  // Visible in source - demo site only
+    displayName: 'Administrator',
+    email: 'admin@example.com',
     isAdmin: true
   },
   
   defaultDemo: {
     username: 'demo',
-    password: 'DemoUser!2026',
+    password: 'demo',  // Intentionally simple - PUBLIC demo account
     displayName: 'Demo User',
     email: 'demo@example.com',
     isAdmin: false
