@@ -172,18 +172,20 @@ const APP_CONFIG = {
 
   // ============================================
   // DEFAULT USERS
+  // NOTE: These are local fallback users only.
+  // For shared admin access, use GitHub sync database.
   // ============================================
   defaultAdmin: {
-    username: 'admin',
-    password: 'admin123',
-    displayName: 'Administrator',
-    email: 'admin@example.com',
+    username: 'localadmin',
+    password: 'Aiu2026!LocalDev',
+    displayName: 'Local Admin',
+    email: 'localadmin@example.com',
     isAdmin: true
   },
   
   defaultDemo: {
     username: 'demo',
-    password: 'demo123',
+    password: 'DemoUser!2026',
     displayName: 'Demo User',
     email: 'demo@example.com',
     isAdmin: false
