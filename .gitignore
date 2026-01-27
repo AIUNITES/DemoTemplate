@@ -1,3 +1,6 @@
+# Local configuration (contains admin credentials - NEVER PUBLISH)
+js/local-users.js
+
 # OS generated files
 .DS_Store
 .DS_Store?

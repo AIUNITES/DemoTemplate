@@ -172,21 +172,14 @@ const APP_CONFIG = {
 
   // ============================================
   // DEFAULT USERS
-  // NOTE: These credentials are visible in source code.
-  // For static sites, this is unavoidable - "auth" is UX, not security.
-  // Real security would require a backend server.
+  // Admin credentials are in js/local-users.js (gitignored)
+  // See js/local-users.template.js for setup instructions
   // ============================================
-  defaultAdmin: {
-    username: 'admin',
-    password: 'admin',  // Visible in source - demo site only
-    displayName: 'Administrator',
-    email: 'admin@example.com',
-    isAdmin: true
-  },
+  defaultAdmin: null,  // Loaded from local-users.js (not published to GitHub)
   
   defaultDemo: {
     username: 'demo',
-    password: 'demo',  // Intentionally simple - PUBLIC demo account
+    password: 'demo',
     displayName: 'Demo User',
     email: 'demo@example.com',
     isAdmin: false

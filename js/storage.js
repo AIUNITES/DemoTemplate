@@ -18,18 +18,18 @@ const Storage = {
 
   /**
    * Initialize storage with default data
-   * NOTE: No local admin is created - admin access comes from:
-   *   1. First registered user automatically becomes admin
-   *   2. GitHub sync database
+   * Admin comes from local-users.js (gitignored) if present
+   * Demo user comes from config.js (public)
    */
   init() {
     // Initialize users
     if (!localStorage.getItem(this.KEYS.USERS)) {
       const users = {};
       
-      // Admin user - only create if explicitly configured (defaultAdmin is usually null)
-      const admin = APP_CONFIG.defaultAdmin;
-      if (admin && admin.username) {
+      // Admin user from LOCAL_USERS (js/local-users.js - gitignored)
+      // This file is not published to GitHub
+      if (typeof LOCAL_USERS !== 'undefined' && LOCAL_USERS.admin) {
+        const admin = LOCAL_USERS.admin;
         users[admin.username] = {
           id: 'admin_001',
           username: admin.username,
@@ -40,9 +40,10 @@ const Storage = {
           createdAt: new Date().toISOString(),
           settings: {}
         };
+        console.log('[Storage] Admin loaded from local-users.js');
       }
       
-      // Demo user - always create for public demo access
+      // Demo user from config (public)
       const demo = APP_CONFIG.defaultDemo;
       if (demo && demo.username) {
         users[demo.username] = {
