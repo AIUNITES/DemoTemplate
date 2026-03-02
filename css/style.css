@@ -2399,3 +2399,107 @@ h4 { font-size: 1rem; }
   font-size: 0.85rem;
   padding: 0.5rem 1rem;
 }
+
+/* ==================== SHOP / AFFILIATE SECTION ==================== */
+.landing-shop {
+  padding: 4rem 5%;
+  text-align: center;
+}
+
+.landing-shop h2 {
+  margin-bottom: 0.5rem;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.shop-card {
+  display: block;
+  background: var(--dark);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--white);
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+
+.shop-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.shop-card-icon {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  position: relative;
+}
+
+.shop-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.shop-card-body {
+  padding: 1.25rem;
+}
+
+.shop-card-title {
+  font-size: 1.05rem;
+  margin-bottom: 0.4rem;
+}
+
+.shop-card-desc {
+  color: var(--gray-light);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.shop-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-dark);
+}
+
+.shop-price {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--primary);
+}
+
+.shop-cta {
+  font-size: 0.85rem;
+  color: var(--gray-light);
+  transition: var(--transition);
+}
+
+.shop-card:hover .shop-cta {
+  color: var(--white);
+}
+
+.shop-disclosure {
+  margin-top: 2rem;
+  font-size: 0.75rem;
+  color: var(--gray);
+  font-style: italic;
+}

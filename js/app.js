@@ -281,6 +281,9 @@ const App = {
       `).join('');
     }
 
+    // Load shop section
+    this.loadShopSection();
+
     // Load landing items (from demo content)
     const itemsGrid = document.getElementById('landing-items-grid');
     if (itemsGrid && APP_CONFIG.demoItems) {
@@ -294,6 +297,42 @@ const App = {
             <p class="item-card-desc">${this.escapeHtml(item.description || '')}</p>
           </div>
         </div>
+      `).join('');
+    }
+  },
+
+  loadShopSection() {
+    const shop = APP_CONFIG.shop;
+    if (!shop || !shop.products || shop.products.length === 0) return;
+
+    const section = document.getElementById('landing-shop');
+    if (!section) return;
+
+    section.style.display = '';
+
+    const title = document.getElementById('shop-title');
+    if (title) title.textContent = shop.title || 'Recommended';
+
+    const subtitle = document.getElementById('shop-subtitle');
+    if (subtitle) subtitle.textContent = shop.subtitle || '';
+
+    const grid = document.getElementById('shop-grid');
+    if (grid) {
+      grid.innerHTML = shop.products.map(product => `
+        <a href="${product.url}" target="_blank" rel="noopener sponsored" class="shop-card">
+          <div class="shop-card-icon" style="background: linear-gradient(135deg, ${product.color}, ${this.adjustColor(product.color, -30)});">
+            ${product.icon}
+            ${product.badge ? `<span class="shop-badge">${product.badge}</span>` : ''}
+          </div>
+          <div class="shop-card-body">
+            <h3 class="shop-card-title">${this.escapeHtml(product.name)}</h3>
+            <p class="shop-card-desc">${this.escapeHtml(product.description)}</p>
+            <div class="shop-card-footer">
+              <span class="shop-price">${product.price}</span>
+              <span class="shop-cta">View on Amazon →</span>
+            </div>
+          </div>
+        </a>
       `).join('');
     }
   },

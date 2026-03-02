@@ -171,6 +171,46 @@ const APP_CONFIG = {
   ],
 
   // ============================================
+  // SHOP / AFFILIATE SECTION (landing page)
+  // ============================================
+  // Set to null to hide the shop section entirely
+  // Amazon affiliate tag: replace 'yourtag-20' with your Associates tag
+  shop: {
+    title: '🛒 Recommended Resources',
+    subtitle: 'Tools and resources we use and recommend',
+    amazonTag: 'yourtag-20', // Your Amazon Associates tag
+    products: [
+      {
+        name: 'Example Product 1',
+        description: 'A great tool for getting started.',
+        price: '$29.99',
+        icon: '📘',
+        color: '#3b82f6',
+        url: 'https://www.amazon.com/dp/ASIN1?tag=yourtag-20',
+        badge: 'Popular'
+      },
+      {
+        name: 'Example Product 2',
+        description: 'Essential for any serious project.',
+        price: '$49.99',
+        icon: '🛠️',
+        color: '#10b981',
+        url: 'https://www.amazon.com/dp/ASIN2?tag=yourtag-20',
+        badge: null
+      },
+      {
+        name: 'Example Product 3',
+        description: 'Take your skills to the next level.',
+        price: '$19.99',
+        icon: '🎯',
+        color: '#f59e0b',
+        url: 'https://www.amazon.com/dp/ASIN3?tag=yourtag-20',
+        badge: 'New'
+      }
+    ]
+  },
+
+  // ============================================
   // DEFAULT USERS
   // Admin credentials are in js/local-users.js (gitignored)
   // See js/local-users.template.js for setup instructions
