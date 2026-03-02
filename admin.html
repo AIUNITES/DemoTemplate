@@ -864,6 +864,12 @@
         <div class="admin-nav-divider"></div>
         
         <li class="admin-nav-item">
+          <a href="#monetization" class="admin-nav-link" data-section="monetization">
+            <span class="nav-icon">💰</span>
+            Monetization
+          </a>
+        </li>
+        <li class="admin-nav-item">
           <a href="#changelog" class="admin-nav-link" data-section="changelog">
             <span class="nav-icon">📝</span>
             Changelog
@@ -1279,6 +1285,78 @@
         </div>
       </section>
       
+      <!-- Monetization Section -->
+      <section id="monetization" class="admin-section">
+        <div class="admin-header">
+          <div>
+            <h2>💰 Monetization</h2>
+            <p>Configure affiliate links and ad placements</p>
+          </div>
+        </div>
+
+        <!-- Amazon Associates -->
+        <div class="settings-section">
+          <h3 style="display:flex;justify-content:space-between;align-items:center;">
+            <span>💳 Amazon Associates</span>
+            <label class="toggle">
+              <input type="checkbox" id="m-amazon-enabled">
+              <span class="toggle-slider"></span>
+            </label>
+          </h3>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:1rem;">Earn commissions from product recommendations on your landing page.</p>
+          <div id="m-amazon-fields">
+            <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:0.5rem;">
+              <label style="font-weight:500;">Affiliate Tag</label>
+              <input type="text" id="m-amazon-tag" placeholder="yourtag-20" style="padding:10px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;width:100%;">
+              <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);">Your Amazon Associates tracking ID (e.g. mysite-20)</span>
+            </div>
+            <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:0.5rem;">
+              <label style="font-weight:500;">Section Title</label>
+              <input type="text" id="m-amazon-title" value="🛒 Recommended Resources" style="padding:10px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;width:100%;">
+            </div>
+            <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:0.5rem;">
+              <label style="font-weight:500;">Section Subtitle</label>
+              <input type="text" id="m-amazon-subtitle" value="Tools and resources we use and recommend" style="padding:10px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;width:100%;">
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:1.25rem 0 0.75rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.1);">
+              <h4 style="margin:0;">Products</h4>
+              <button class="btn-secondary" id="m-add-product" style="font-size:0.85rem;padding:6px 14px;">➕ Add Product</button>
+            </div>
+            <div id="m-products-list"></div>
+          </div>
+        </div>
+
+        <!-- Google AdSense -->
+        <div class="settings-section">
+          <h3 style="display:flex;justify-content:space-between;align-items:center;">
+            <span>📊 Google AdSense</span>
+            <label class="toggle">
+              <input type="checkbox" id="m-adsense-enabled">
+              <span class="toggle-slider"></span>
+            </label>
+          </h3>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:1rem;">Display automatic ads on your site. Requires an approved AdSense account.</p>
+          <div id="m-adsense-fields">
+            <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:0.5rem;">
+              <label style="font-weight:500;">Publisher ID</label>
+              <input type="text" id="m-adsense-pub" placeholder="ca-pub-1234567890" style="padding:10px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;width:100%;">
+              <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);">Your AdSense publisher ID (starts with ca-pub-)</span>
+            </div>
+            <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:0.5rem;">
+              <label style="font-weight:500;">Ad Placement</label>
+              <select id="m-adsense-placement" style="padding:10px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;width:100%;">
+                <option value="footer">Footer only (least intrusive)</option>
+                <option value="between">Between sections</option>
+                <option value="auto">Auto ads (Google decides)</option>
+              </select>
+              <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);">Where ads appear on the landing page</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="saveMonetization()">💾 Save Monetization Settings</button>
+      </section>
+
       <!-- Changelog Section -->
       <section id="changelog" class="admin-section">
         <div class="admin-header">
@@ -1410,6 +1488,9 @@
       loadUsers();
       loadStatistics();
       
+      // Load monetization settings
+      loadMonetization();
+
       // Initialize SQL Database
       if (typeof SQLDatabase !== 'undefined') {
         SQLDatabase.init();
@@ -1557,6 +1638,120 @@
       return div.innerHTML;
     }
     
+    // ==================== MONETIZATION ====================
+    const MONETIZE_KEY = `${APP_CONFIG.storagePrefix}_monetization`;
+    const PRODUCT_ICONS = ['📘', '🛠️', '🎯', '🚀', '⭐', '🔥', '💡', '🎨', '💻', '🌐'];
+    const PRODUCT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
+
+    function loadMonetization() {
+      let settings;
+      try { settings = JSON.parse(localStorage.getItem(MONETIZE_KEY)); } catch(e) {}
+
+      const amazonEl = document.getElementById('m-amazon-enabled');
+      const adsenseEl = document.getElementById('m-adsense-enabled');
+
+      if (settings) {
+        amazonEl.checked = settings.amazon?.enabled || false;
+        document.getElementById('m-amazon-tag').value = settings.amazon?.tag || '';
+        document.getElementById('m-amazon-title').value = settings.amazon?.title || '🛒 Recommended Resources';
+        document.getElementById('m-amazon-subtitle').value = settings.amazon?.subtitle || 'Tools and resources we use and recommend';
+        renderProducts(settings.amazon?.products || []);
+        adsenseEl.checked = settings.adsense?.enabled || false;
+        document.getElementById('m-adsense-pub').value = settings.adsense?.pubId || '';
+        document.getElementById('m-adsense-placement').value = settings.adsense?.placement || 'footer';
+      } else if (APP_CONFIG.shop) {
+        amazonEl.checked = true;
+        document.getElementById('m-amazon-tag').value = APP_CONFIG.shop.amazonTag || '';
+        document.getElementById('m-amazon-title').value = APP_CONFIG.shop.title || '';
+        document.getElementById('m-amazon-subtitle').value = APP_CONFIG.shop.subtitle || '';
+        renderProducts(APP_CONFIG.shop.products || []);
+      } else {
+        renderProducts([]);
+      }
+
+      toggleFields('m-amazon-fields', amazonEl.checked);
+      toggleFields('m-adsense-fields', adsenseEl.checked);
+
+      amazonEl.addEventListener('change', (e) => toggleFields('m-amazon-fields', e.target.checked));
+      adsenseEl.addEventListener('change', (e) => toggleFields('m-adsense-fields', e.target.checked));
+      document.getElementById('m-add-product').addEventListener('click', addProduct);
+    }
+
+    function toggleFields(id, show) {
+      document.getElementById(id).style.display = show ? '' : 'none';
+    }
+
+    function saveMonetization() {
+      const settings = {
+        amazon: {
+          enabled: document.getElementById('m-amazon-enabled').checked,
+          tag: document.getElementById('m-amazon-tag').value.trim(),
+          title: document.getElementById('m-amazon-title').value.trim(),
+          subtitle: document.getElementById('m-amazon-subtitle').value.trim(),
+          products: collectProducts()
+        },
+        adsense: {
+          enabled: document.getElementById('m-adsense-enabled').checked,
+          pubId: document.getElementById('m-adsense-pub').value.trim(),
+          placement: document.getElementById('m-adsense-placement').value
+        }
+      };
+      localStorage.setItem(MONETIZE_KEY, JSON.stringify(settings));
+      showToast('Monetization settings saved! Refresh landing page to see changes.', 'success');
+    }
+
+    function renderProducts(products) {
+      const list = document.getElementById('m-products-list');
+      if (products.length === 0) {
+        list.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:0.85rem;padding:1rem 0;">No products yet. Click "Add Product" to start.</p>';
+        return;
+      }
+      list.innerHTML = products.map((p, i) => `
+        <div class="product-row" data-index="${i}" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:1rem;margin-bottom:0.75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+            <span style="font-size:0.8rem;font-weight:600;color:var(--primary-color);">#${i + 1}</span>
+            <button class="btn-tiny danger" onclick="removeProduct(${i})">&times; Remove</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+            <div><label style="font-size:0.8rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px;">Name</label><input type="text" class="p-name" value="${escapeHtml(p.name||'')}" placeholder="Product name" style="padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;width:100%;"></div>
+            <div><label style="font-size:0.8rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px;">ASIN or URL</label><input type="text" class="p-asin" value="${escapeHtml(p.asin||p.url||'')}" placeholder="B0XXXXXXXX" style="padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;width:100%;"></div>
+          </div>
+          <div style="margin-top:0.75rem;"><label style="font-size:0.8rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px;">Description</label><input type="text" class="p-desc" value="${escapeHtml(p.description||'')}" placeholder="Short description" style="padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;width:100%;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.75rem;margin-top:0.75rem;">
+            <div><label style="font-size:0.8rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px;">Price</label><input type="text" class="p-price" value="${escapeHtml(p.price||'')}" placeholder="$29.99" style="padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;width:100%;"></div>
+            <div><label style="font-size:0.8rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px;">Icon</label><select class="p-icon" style="padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;width:100%;">${PRODUCT_ICONS.map(ic => `<option value="${ic}" ${ic===(p.icon||PRODUCT_ICONS[0])?'selected':''}>${ic}</option>`).join('')}</select></div>
+            <div><label style="font-size:0.8rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px;">Color</label><select class="p-color" style="padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;width:100%;">${PRODUCT_COLORS.map(c => `<option value="${c}" ${c===(p.color||PRODUCT_COLORS[0])?'selected':''}>${c}</option>`).join('')}</select></div>
+            <div><label style="font-size:0.8rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px;">Badge</label><input type="text" class="p-badge" value="${escapeHtml(p.badge||'')}" placeholder="Popular" style="padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;width:100%;"></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addProduct() {
+      const products = collectProducts();
+      products.push({ name: '', description: '', asin: '', price: '', icon: '📘', color: '#3b82f6', badge: '' });
+      renderProducts(products);
+    }
+
+    function removeProduct(index) {
+      const products = collectProducts();
+      products.splice(index, 1);
+      renderProducts(products);
+    }
+
+    function collectProducts() {
+      const rows = document.querySelectorAll('#m-products-list .product-row');
+      return Array.from(rows).map(row => ({
+        name: row.querySelector('.p-name')?.value || '',
+        description: row.querySelector('.p-desc')?.value || '',
+        asin: row.querySelector('.p-asin')?.value || '',
+        price: row.querySelector('.p-price')?.value || '',
+        icon: row.querySelector('.p-icon')?.value || '📘',
+        color: row.querySelector('.p-color')?.value || '#3b82f6',
+        badge: row.querySelector('.p-badge')?.value || ''
+      }));
+    }
+
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
       if (!container) return;
