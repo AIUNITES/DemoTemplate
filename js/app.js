@@ -212,6 +212,16 @@ const App = {
     document.getElementById('show-terms')?.addEventListener('click', (e) => this.showLegal(e, 'terms'));
     document.getElementById('show-privacy')?.addEventListener('click', (e) => this.showLegal(e, 'privacy'));
 
+    // Monetization
+    document.getElementById('save-monetization-btn')?.addEventListener('click', () => this.saveMonetization());
+    document.getElementById('add-product-btn')?.addEventListener('click', () => this.addProductRow());
+    document.getElementById('monetize-amazon-enabled')?.addEventListener('change', (e) => {
+      document.getElementById('amazon-fields').style.display = e.target.checked ? '' : 'none';
+    });
+    document.getElementById('monetize-adsense-enabled')?.addEventListener('change', (e) => {
+      document.getElementById('adsense-fields').style.display = e.target.checked ? '' : 'none';
+    });
+
     // Close modals on escape
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -284,6 +294,9 @@ const App = {
     // Load shop section
     this.loadShopSection();
 
+    // Load AdSense if configured
+    this.loadAdSense();
+
     // Load landing items (from demo content)
     const itemsGrid = document.getElementById('landing-items-grid');
     if (itemsGrid && APP_CONFIG.demoItems) {
@@ -302,7 +315,8 @@ const App = {
   },
 
   loadShopSection() {
-    const shop = APP_CONFIG.shop;
+    // Priority: localStorage settings > config.js defaults
+    const shop = this.loadShopFromSettings() || APP_CONFIG.shop;
     if (!shop || !shop.products || shop.products.length === 0) return;
 
     const section = document.getElementById('landing-shop');
@@ -1015,6 +1029,7 @@ const App = {
     this.loadAdminStats();
     this.loadAdminUsers();
     this.loadChangelog();
+    this.loadMonetization();
     document.getElementById('admin-modal').classList.add('active');
     document.getElementById('user-dropdown')?.classList.remove('active');
   },
@@ -1165,6 +1180,439 @@ const App = {
 
   closeLegalModal() {
     document.getElementById('legal-modal')?.classList.remove('active');
+  },
+
+  // ==================== MONETIZATION ====================
+
+  initMonetization() {
+    // Load saved settings
+    const settings = this.getMonetizationSettings();
+    
+    // Populate admin fields
+    const amazonEnabled = document.getElementById('monetize-amazon-enabled');
+    const adsenseEnabled = document.getElementById('monetize-adsense-enabled');
+    if (amazonEnabled) amazonEnabled.checked = settings.amazon?.enabled || false;
+    if (adsenseEnabled) adsenseEnabled.checked = settings.adsense?.enabled || false;
+    
+    const amazonTag = document.getElementById('monetize-amazon-tag');
+    if (amazonTag) amazonTag.value = settings.amazon?.tag || '';
+    
+    const amazonTitle = document.getElementById('monetize-amazon-title');
+    if (amazonTitle) amazonTitle.value = settings.amazon?.title || '\ud83d\uded2 Recommended Resources';
+    
+    const amazonSubtitle = document.getElementById('monetize-amazon-subtitle');
+    if (amazonSubtitle) amazonSubtitle.value = settings.amazon?.subtitle || 'Tools and resources we use and recommend';
+    
+    const adsensePub = document.getElementById('monetize-adsense-pub');
+    if (adsensePub) adsensePub.value = settings.adsense?.publisherId || '';
+    
+    const adsensePlacement = document.getElementById('monetize-adsense-placement');
+    if (adsensePlacement) adsensePlacement.value = settings.adsense?.placement || 'footer';
+    
+    // Render saved products
+    this.renderProductsList(settings.amazon?.products || []);
+    
+    // Toggle field visibility
+    this.toggleMonetizeFields('amazon-fields', settings.amazon?.enabled);
+    this.toggleMonetizeFields('adsense-fields', settings.adsense?.enabled);
+    
+    // Bind events
+    amazonEnabled?.addEventListener('change', (e) => this.toggleMonetizeFields('amazon-fields', e.target.checked));
+    adsenseEnabled?.addEventListener('change', (e) => this.toggleMonetizeFields('adsense-fields', e.target.checked));
+    document.getElementById('add-product-btn')?.addEventListener('click', () => this.addProductRow());
+    document.getElementById('save-monetization-btn')?.addEventListener('click', () => this.saveMonetization());
+  },
+
+  toggleMonetizeFields(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? 'block' : 'none';
+  },
+
+  getMonetizationSettings() {
+    try {
+      return JSON.parse(localStorage.getItem(`${APP_CONFIG.storagePrefix}_monetization`) || '{}');
+    } catch { return {}; }
+  },
+
+  renderProductsList(products) {
+    const list = document.getElementById('monetize-products-list');
+    if (!list) return;
+    
+    if (products.length === 0) {
+      list.innerHTML = '<p class="monetize-empty">No products added. Click "Add Product" to get started.</p>';
+      return;
+    }
+    
+    list.innerHTML = products.map((p, i) => `
+      <div class="monetize-product-row" data-index="${i}">
+        <div class="product-row-header">
+          <span class="product-row-num">#${i + 1}</span>
+          <button type="button" class="btn-tiny danger" onclick="App.removeProduct(${i})">�\uddd1</button>
+        </div>
+        <div class="product-row-fields">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="product-field" data-field="name" data-index="${i}" value="${this.escapeHtml(p.name || '')}" placeholder="Product name">
+          </div>
+          <div class="form-group">
+            <label>ASIN or URL</label>
+            <input type="text" class="product-field" data-field="asin" data-index="${i}" value="${this.escapeHtml(p.asin || '')}" placeholder="B0XXXXXXXX or full Amazon URL">
+            <span class="form-hint">Amazon product ID (from URL) — your tag gets added automatically</span>
+          </div>
+          <div class="product-row-inline">
+            <div class="form-group">
+              <label>Price</label>
+              <input type="text" class="product-field" data-field="price" data-index="${i}" value="${this.escapeHtml(p.price || '')}" placeholder="$29.99">
+            </div>
+            <div class="form-group">
+              <label>Icon</label>
+              <input type="text" class="product-field" data-field="icon" data-index="${i}" value="${p.icon || '\ud83d\udcd8'}" placeholder="\ud83d\udcd8" style="text-align:center;">
+            </div>
+            <div class="form-group">
+              <label>Color</label>
+              <input type="color" class="product-field product-color-input" data-field="color" data-index="${i}" value="${p.color || '#3b82f6'}">
+            </div>
+          </div>
+          <div class="product-row-inline">
+            <div class="form-group">
+              <label>Description</label>
+              <input type="text" class="product-field" data-field="description" data-index="${i}" value="${this.escapeHtml(p.description || '')}" placeholder="Short description">
+            </div>
+            <div class="form-group">
+              <label>Badge</label>
+              <input type="text" class="product-field" data-field="badge" data-index="${i}" value="${this.escapeHtml(p.badge || '')}" placeholder="Popular, New, etc.">
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  addProductRow() {
+    const settings = this.getMonetizationSettings();
+    const products = settings.amazon?.products || [];
+    products.push({ name: '', asin: '', price: '', icon: '\ud83d\udcd8', color: '#3b82f6', description: '', badge: '' });
+    this.renderProductsList(products);
+  },
+
+  removeProduct(index) {
+    const products = this.collectProductsFromForm();
+    products.splice(index, 1);
+    this.renderProductsList(products);
+  },
+
+  collectProductsFromForm() {
+    const products = [];
+    const rows = document.querySelectorAll('.monetize-product-row');
+    rows.forEach(row => {
+      const i = row.dataset.index;
+      const get = (field) => row.querySelector(`[data-field="${field}"]`)?.value || '';
+      products.push({
+        name: get('name'),
+        asin: get('asin'),
+        price: get('price'),
+        icon: get('icon') || '\ud83d\udcd8',
+        color: get('color') || '#3b82f6',
+        description: get('description'),
+        badge: get('badge')
+      });
+    });
+    return products;
+  },
+
+  saveMonetization() {
+    const tag = document.getElementById('monetize-amazon-tag')?.value.trim() || '';
+    const products = this.collectProductsFromForm();
+    
+    // Build URLs from ASINs + tag
+    products.forEach(p => {
+      if (p.asin && !p.asin.startsWith('http')) {
+        p.url = `https://www.amazon.com/dp/${p.asin}${tag ? '?tag=' + tag : ''}`;
+      } else if (p.asin && p.asin.startsWith('http')) {
+        // If full URL, inject tag
+        try {
+          const url = new URL(p.asin);
+          if (tag) url.searchParams.set('tag', tag);
+          p.url = url.toString();
+        } catch {
+          p.url = p.asin;
+        }
+      } else {
+        p.url = '#';
+      }
+    });
+    
+    const settings = {
+      amazon: {
+        enabled: document.getElementById('monetize-amazon-enabled')?.checked || false,
+        tag: tag,
+        title: document.getElementById('monetize-amazon-title')?.value || '\ud83d\uded2 Recommended Resources',
+        subtitle: document.getElementById('monetize-amazon-subtitle')?.value || '',
+        products: products
+      },
+      adsense: {
+        enabled: document.getElementById('monetize-adsense-enabled')?.checked || false,
+        publisherId: document.getElementById('monetize-adsense-pub')?.value.trim() || '',
+        placement: document.getElementById('monetize-adsense-placement')?.value || 'footer'
+      }
+    };
+    
+    localStorage.setItem(`${APP_CONFIG.storagePrefix}_monetization`, JSON.stringify(settings));
+    
+    // Refresh the landing page shop section
+    this.loadShopSection();
+    this.loadAdSense();
+    
+    this.showToast('Monetization settings saved!', 'success');
+  },
+
+  loadAdSense() {
+    const settings = this.getMonetizationSettings();
+    const adsense = settings.adsense;
+    
+    // Remove existing adsense script if any
+    document.getElementById('adsense-script')?.remove();
+    
+    if (!adsense?.enabled || !adsense?.publisherId) return;
+    
+    // Inject AdSense script
+    const script = document.createElement('script');
+    script.id = 'adsense-script';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsense.publisherId}`;
+    document.head.appendChild(script);
+    
+    if (adsense.placement === 'auto') {
+      // Auto ads - Google handles placement
+      const meta = document.createElement('meta');
+      meta.name = 'google-adsense-account';
+      meta.content = adsense.publisherId;
+      document.head.appendChild(meta);
+    }
+  },
+
+  // ==================== MONETIZATION ====================
+
+  getMonetizationKey() {
+    return `${APP_CONFIG.storagePrefix}_monetization`;
+  },
+
+  getMonetizationSettings() {
+    try {
+      const data = localStorage.getItem(this.getMonetizationKey());
+      return data ? JSON.parse(data) : null;
+    } catch { return null; }
+  },
+
+  loadMonetization() {
+    const settings = this.getMonetizationSettings();
+    const amazonEnabled = document.getElementById('monetize-amazon-enabled');
+    const adsenseEnabled = document.getElementById('monetize-adsense-enabled');
+    const amazonFields = document.getElementById('amazon-fields');
+    const adsenseFields = document.getElementById('adsense-fields');
+
+    if (settings) {
+      // Amazon
+      amazonEnabled.checked = settings.amazon?.enabled || false;
+      document.getElementById('monetize-amazon-tag').value = settings.amazon?.tag || '';
+      document.getElementById('monetize-amazon-title').value = settings.amazon?.title || '\ud83d\uded2 Recommended Resources';
+      document.getElementById('monetize-amazon-subtitle').value = settings.amazon?.subtitle || 'Tools and resources we use and recommend';
+      this.renderProductRows(settings.amazon?.products || []);
+
+      // AdSense
+      adsenseEnabled.checked = settings.adsense?.enabled || false;
+      document.getElementById('monetize-adsense-pub').value = settings.adsense?.pubId || '';
+      document.getElementById('monetize-adsense-placement').value = settings.adsense?.placement || 'footer';
+    } else {
+      // Load defaults from config.js shop section
+      const shop = APP_CONFIG.shop;
+      if (shop) {
+        amazonEnabled.checked = true;
+        document.getElementById('monetize-amazon-tag').value = shop.amazonTag || '';
+        document.getElementById('monetize-amazon-title').value = shop.title || '';
+        document.getElementById('monetize-amazon-subtitle').value = shop.subtitle || '';
+        this.renderProductRows(shop.products || []);
+      } else {
+        this.renderProductRows([]);
+      }
+    }
+
+    // Toggle field visibility
+    amazonFields.style.display = amazonEnabled.checked ? '' : 'none';
+    adsenseFields.style.display = adsenseEnabled.checked ? '' : 'none';
+  },
+
+  saveMonetization() {
+    const tag = document.getElementById('monetize-amazon-tag').value.trim();
+    const products = this.collectProductRows();
+
+    const settings = {
+      amazon: {
+        enabled: document.getElementById('monetize-amazon-enabled').checked,
+        tag: tag,
+        title: document.getElementById('monetize-amazon-title').value.trim(),
+        subtitle: document.getElementById('monetize-amazon-subtitle').value.trim(),
+        products: products
+      },
+      adsense: {
+        enabled: document.getElementById('monetize-adsense-enabled').checked,
+        pubId: document.getElementById('monetize-adsense-pub').value.trim(),
+        placement: document.getElementById('monetize-adsense-placement').value
+      }
+    };
+
+    localStorage.setItem(this.getMonetizationKey(), JSON.stringify(settings));
+    this.showToast('Monetization settings saved! Refresh to see changes.', 'success');
+  },
+
+  renderProductRows(products) {
+    const list = document.getElementById('monetize-products-list');
+    if (!list) return;
+
+    if (products.length === 0) {
+      list.innerHTML = '<p style="color: var(--gray); font-size: 0.85rem; padding: 1rem 0;">No products added yet. Click \"Add Product\" to start.</p>';
+      return;
+    }
+
+    const icons = ['\ud83d\udcd8', '\ud83d\udee0\ufe0f', '\ud83c\udfaf', '\ud83d\ude80', '\u2b50', '\ud83d\udd25', '\ud83d\udca1', '\ud83c\udfa8', '\ud83d\udcbb', '\ud83c\udf10'];
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
+
+    list.innerHTML = products.map((p, i) => `
+      <div class="product-row" data-index="${i}">
+        <div class="product-row-header">
+          <span class="product-row-num">#${i + 1}</span>
+          <button type="button" class="btn-tiny danger" onclick="App.removeProductRow(${i})">&times;</button>
+        </div>
+        <div class="product-row-fields">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="prod-name" value="${this.escapeHtml(p.name || '')}" placeholder="Product name">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" class="prod-desc" value="${this.escapeHtml(p.description || '')}" placeholder="Short description">
+          </div>
+          <div class="product-row-inline">
+            <div class="form-group">
+              <label>ASIN or URL</label>
+              <input type="text" class="prod-asin" value="${this.escapeHtml(p.asin || p.url || '')}" placeholder="B0XXXXXXXX or full URL">
+            </div>
+            <div class="form-group">
+              <label>Price</label>
+              <input type="text" class="prod-price" value="${this.escapeHtml(p.price || '')}" placeholder="$29.99">
+            </div>
+          </div>
+          <div class="product-row-inline">
+            <div class="form-group">
+              <label>Icon</label>
+              <select class="prod-icon">
+                ${icons.map(ic => `<option value="${ic}" ${ic === (p.icon || icons[0]) ? 'selected' : ''}>${ic}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Color</label>
+              <select class="prod-color">
+                ${colors.map(c => `<option value="${c}" style="background:${c}" ${c === (p.color || colors[0]) ? 'selected' : ''}>${c}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Badge</label>
+              <input type="text" class="prod-badge" value="${this.escapeHtml(p.badge || '')}" placeholder="Popular, New...">
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  addProductRow() {
+    const products = this.collectProductRows();
+    products.push({ name: '', description: '', asin: '', price: '', icon: '\ud83d\udcd8', color: '#3b82f6', badge: '' });
+    this.renderProductRows(products);
+  },
+
+  removeProductRow(index) {
+    const products = this.collectProductRows();
+    products.splice(index, 1);
+    this.renderProductRows(products);
+  },
+
+  collectProductRows() {
+    const rows = document.querySelectorAll('.product-row');
+    const products = [];
+    rows.forEach(row => {
+      products.push({
+        name: row.querySelector('.prod-name')?.value || '',
+        description: row.querySelector('.prod-desc')?.value || '',
+        asin: row.querySelector('.prod-asin')?.value || '',
+        price: row.querySelector('.prod-price')?.value || '',
+        icon: row.querySelector('.prod-icon')?.value || '\ud83d\udcd8',
+        color: row.querySelector('.prod-color')?.value || '#3b82f6',
+        badge: row.querySelector('.prod-badge')?.value || ''
+      });
+    });
+    return products;
+  },
+
+  loadShopFromSettings() {
+    const settings = this.getMonetizationSettings();
+    if (!settings || !settings.amazon?.enabled) return null;
+    if (!settings.amazon.products || settings.amazon.products.length === 0) return null;
+
+    const tag = settings.amazon.tag || '';
+    return {
+      title: settings.amazon.title || 'Recommended',
+      subtitle: settings.amazon.subtitle || '',
+      products: settings.amazon.products.filter(p => p.name).map(p => {
+        let url = p.asin || '';
+        if (url && !url.startsWith('http')) {
+          url = `https://www.amazon.com/dp/${url}${tag ? '?tag=' + tag : ''}`;
+        } else if (url && tag && !url.includes('tag=')) {
+          url += (url.includes('?') ? '&' : '?') + 'tag=' + tag;
+        }
+        return { ...p, url };
+      })
+    };
+  },
+
+  loadAdSense() {
+    const settings = this.getMonetizationSettings();
+    if (!settings || !settings.adsense?.enabled || !settings.adsense?.pubId) return;
+
+    const pubId = settings.adsense.pubId;
+    const placement = settings.adsense.placement || 'footer';
+
+    // Inject AdSense script
+    if (!document.querySelector('script[data-adsense]')) {
+      const script = document.createElement('script');
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.dataset.adsense = 'true';
+      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${pubId}`;
+      document.head.appendChild(script);
+    }
+
+    if (placement === 'auto') return; // Google handles everything
+
+    // Manual ad placement
+    const adHtml = `<div class="adsense-container"><ins class="adsbygoogle" style="display:block" data-ad-client="${pubId}" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true"></ins></div>`;
+
+    if (placement === 'footer') {
+      const footer = document.querySelector('.landing-footer');
+      if (footer) footer.insertAdjacentHTML('beforebegin', adHtml);
+    } else if (placement === 'between') {
+      const sections = document.querySelectorAll('.landing-features, .landing-items, .landing-shop');
+      sections.forEach(s => s.insertAdjacentHTML('afterend', adHtml));
+    }
+
+    // Push ads
+    setTimeout(() => {
+      document.querySelectorAll('.adsbygoogle:not([data-pushed])').forEach(ad => {
+        ad.dataset.pushed = 'true';
+        try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+      });
+    }, 500);
   },
 
   // ==================== UTILITIES ====================

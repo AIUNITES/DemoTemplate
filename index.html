@@ -346,6 +346,7 @@
             <button class="admin-tab" data-admin-tab="database">🗃️ SQL Database</button>
             <button class="admin-tab" data-admin-tab="users">Users</button>
             <button class="admin-tab" data-admin-tab="stats">Statistics</button>
+            <button class="admin-tab" data-admin-tab="monetization">💰 Monetization</button>
             <button class="admin-tab" data-admin-tab="changelog">Changelog</button>
           </div>
 
@@ -692,6 +693,79 @@ Examples:
             <div class="admin-actions">
               <button class="btn-secondary" id="export-all-data-btn">📤 Export All Data</button>
               <button class="btn-secondary danger" id="reset-all-data-btn">🗑️ Reset All Data</button>
+            </div>
+          </div>
+
+          <!-- Monetization Tab -->
+          <div id="admin-monetization-tab" class="admin-tab-content">
+            <div class="monetization-section">
+              <div class="monetization-header">
+                <span class="monetization-icon">💳</span>
+                <div>
+                  <h4>Amazon Associates</h4>
+                  <p class="monetization-desc">Earn commissions from product recommendations on your landing page.</p>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="monetize-amazon-enabled">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="monetization-fields" id="amazon-fields">
+                <div class="form-group">
+                  <label>Affiliate Tag</label>
+                  <input type="text" id="monetize-amazon-tag" placeholder="yourtag-20">
+                  <span class="form-hint">Your Amazon Associates tracking ID (e.g. mysite-20)</span>
+                </div>
+                <div class="form-group">
+                  <label>Section Title</label>
+                  <input type="text" id="monetize-amazon-title" placeholder="Recommended Resources" value="🛒 Recommended Resources">
+                </div>
+                <div class="form-group">
+                  <label>Section Subtitle</label>
+                  <input type="text" id="monetize-amazon-subtitle" placeholder="Tools and resources we recommend" value="Tools and resources we use and recommend">
+                </div>
+                <div class="monetization-products-header">
+                  <h5>Products</h5>
+                  <button class="btn-secondary" id="add-product-btn" type="button">➕ Add Product</button>
+                </div>
+                <div id="monetize-products-list" class="monetization-products-list"></div>
+              </div>
+            </div>
+
+            <div class="settings-divider"></div>
+
+            <div class="monetization-section">
+              <div class="monetization-header">
+                <span class="monetization-icon">📊</span>
+                <div>
+                  <h4>Google AdSense</h4>
+                  <p class="monetization-desc">Display automatic ads on your site. Requires an approved AdSense account.</p>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="monetize-adsense-enabled">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="monetization-fields" id="adsense-fields">
+                <div class="form-group">
+                  <label>Publisher ID</label>
+                  <input type="text" id="monetize-adsense-pub" placeholder="ca-pub-1234567890">
+                  <span class="form-hint">Your AdSense publisher ID (starts with ca-pub-)</span>
+                </div>
+                <div class="form-group">
+                  <label>Ad Placement</label>
+                  <select id="monetize-adsense-placement">
+                    <option value="footer">Footer only (least intrusive)</option>
+                    <option value="between">Between sections</option>
+                    <option value="auto">Auto ads (Google decides)</option>
+                  </select>
+                  <span class="form-hint">Where ads appear on the landing page</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn-primary" id="save-monetization-btn">💾 Save Monetization Settings</button>
             </div>
           </div>
 
