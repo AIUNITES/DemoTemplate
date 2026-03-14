@@ -28,8 +28,8 @@ from datetime import datetime, timedelta
 
 # Config
 SERVER_PORT = 8000
-SERVER_DIR = r"C:\Users\Tom\Documents\GitHub\DemoTemplate"
-PUBLISH_LOG = r"C:\Users\Tom\Documents\GitHub\scripts\publish-log.txt"
+SERVER_DIR = r"C:\Users\tombh\Documents\GitHub\DemoTemplate"
+PUBLISH_LOG = r"C:\Users\tombh\Documents\GitHub\scripts\publish-log.txt"
 PUSH_INTERVAL_MINUTES = 10
 
 # State
@@ -434,11 +434,11 @@ def open_publish_log(icon=None, item=None):
 
 def open_github_folder(icon=None, item=None):
     """Open GitHub folder"""
-    os.startfile(r"C:\Users\Tom\Documents\GitHub")
+    os.startfile(r"C:\Users\tombh\Documents\GitHub")
 
 def run_publish_now(icon=None, item=None):
     """Run the publish script manually"""
-    os.startfile(r"C:\Users\Tom\Documents\GitHub\scripts\auto-publish.bat")
+    os.startfile(r"C:\Users\tombh\Documents\GitHub\scripts\auto-publish.bat")
 
 def quit_app(icon, item):
     """Quit the tray app"""
