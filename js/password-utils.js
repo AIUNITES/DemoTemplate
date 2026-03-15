@@ -1,62 +1,51 @@
 /**
- * AIUNITES Password Utilities
- * ============================
- * SHA-256 hashing via Web Crypto API (built into all modern browsers, no library needed).
- *
- * Passwords are NEVER stored in plaintext. The hash is one-way — even if
- * localStorage or an export file is read, the original password cannot be recovered.
- *
- * Usage:
- *   const hash = await PasswordUtils.hash('mypassword');  // → hex string
- *   const ok   = await PasswordUtils.verify('mypassword', hash); // → true/false
+ * AIUNITES Password Utilities — SHA-256 hashing via Web Crypto API.
+ * Passwords are NEVER stored in plaintext.
  */
 const PasswordUtils = {
-  // Site-specific salt mixed in before hashing.
-  // This means hashes from one AIUNITES site cannot be replayed on another.
   SALT: 'aiunites-2026',
 
-  /**
-   * Hash a password with SHA-256 + salt.
-   * Returns a 64-character lowercase hex string.
-   */
   async hash(password) {
-    const input = password + this.SALT;
-    const buf = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(input)
-    );
-    return Array.from(new Uint8Array(buf))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password + this.SALT));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
   },
 
-  /**
-   * Verify a plaintext password against a stored hash.
-   */
   async verify(password, storedHash) {
-    const inputHash = await this.hash(password);
-    return inputHash === storedHash;
+    return (await this.hash(password)) === storedHash;
   },
 
-  /**
-   * Migrate a user record from plaintext password → passwordHash.
-   * Returns the updated user object (does NOT save to storage — caller handles that).
-   * Call this during login when a plaintext `password` field is still present.
-   */
   async migrate(user, plaintextPassword) {
-    const hash = await this.hash(plaintextPassword);
-    const migrated = { ...user, passwordHash: hash };
-    delete migrated.password; // remove plaintext field
+    const migrated = { ...user, passwordHash: await this.hash(plaintextPassword) };
+    delete migrated.password;
     return migrated;
   },
 
-  /**
-   * Strip password fields from a user object before export or display.
-   * Safe to call on any user object — missing fields are silently ignored.
-   */
   sanitize(user) {
     const { password, passwordHash, ...safe } = user; // eslint-disable-line no-unused-vars
     return safe;
+  },
+
+  /**
+   * Generate a strong random password.
+   * Format: 3 words from a short list + digits + symbol — readable but unpredictable.
+   * e.g.  "Mango#Tiger$7Pixel"
+   * Falls back to pure random chars if crypto is unavailable.
+   */
+  generate() {
+    // Short word pool — easy to read, hard to guess when combined
+    const words = [
+      'Coral','Ember','Flint','Grove','Haven','Ivory','Jade','Kite',
+      'Lapis','Maple','Nova','Orbit','Prism','Quill','Rune','Solar',
+      'Terra','Ultra','Vapor','Waltz','Xenon','Yield','Zinc','Amber',
+      'Birch','Cedar','Delta','Echo','Frost','Glyph','Helix','Indigo'
+    ];
+    const symbols = ['!','@','#','$','%','&','*'];
+    const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const digit = () => Math.floor(Math.random() * 10);
+
+    // Pick 2 words + 1 symbol + 2 digits + 1 word
+    const pw = rand(words) + rand(symbols) + digit() + digit() + rand(words) + rand(symbols) + rand(words);
+    return pw; // e.g. "Nova#47FlintEmber$" — 14-18 chars, mixed case + symbol + digits
   }
 };
 

@@ -62,8 +62,8 @@ const Auth = {
         // Legacy plaintext — verify then migrate to hash
         valid = (user.password === password);
         if (valid) {
-          const migrated = await PasswordUtils.migrate(user, password);
-          Storage.updateUser(user.username, migrated);
+          const hash = await PasswordUtils.hash(password);
+          Storage.updateUser(user.username, { passwordHash: hash, password: null });
           console.log('[Auth] Migrated password to hash for:', username);
         }
       }
