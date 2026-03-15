@@ -7,7 +7,7 @@ const Auth = {
   /**
    * Register new user
    */
-  signup(displayName, username, email, password) {
+  async signup(displayName, username, email, password) {
     if (!displayName || displayName.length < 2) {
       throw new Error('Display name must be at least 2 characters');
     }
@@ -28,11 +28,12 @@ const Auth = {
       throw new Error('Username already taken');
     }
 
+    const passwordHash = await PasswordUtils.hash(password);
     const user = Storage.createUser({
       displayName,
       username,
       email,
-      password
+      passwordHash
     });
 
     Storage.setCurrentUser(user.username);
@@ -40,10 +41,10 @@ const Auth = {
   },
 
   /**
-   * Login user
-   * Checks localStorage first, then SQL database if available
+   * Login user — async to support password hashing and migration.
+   * Checks localStorage first, then SQL database if available.
    */
-  login(username, password) {
+  async login(username, password) {
     if (!username || !password) {
       throw new Error('Please enter username and password');
     }
@@ -52,12 +53,24 @@ const Auth = {
     let user = Storage.getUserByUsername(username);
     
     if (user) {
-      // Found in localStorage - check password
-      if (user.password !== password) {
-        throw new Error('Incorrect password');
+      let valid = false;
+
+      if (user.passwordHash) {
+        // Modern: compare hashes
+        valid = await PasswordUtils.verify(password, user.passwordHash);
+      } else if (user.password) {
+        // Legacy plaintext — verify then migrate to hash
+        valid = (user.password === password);
+        if (valid) {
+          const migrated = await PasswordUtils.migrate(user, password);
+          Storage.updateUser(user.username, migrated);
+          console.log('[Auth] Migrated password to hash for:', username);
+        }
       }
+
+      if (!valid) throw new Error('Incorrect password');
       Storage.setCurrentUser(user.username);
-      return user;
+      return Storage.getUserByUsername(user.username); // re-fetch after possible migration
     }
     
     // Not found in localStorage - try SQL database if available

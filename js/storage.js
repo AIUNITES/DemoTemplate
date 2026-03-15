@@ -44,6 +44,7 @@ const Storage = {
       }
       
       // Demo user from config (public)
+      // Note: demo password stored as plaintext initially; Auth.login() will hash it on first login.
       const demo = APP_CONFIG.defaultDemo;
       if (demo && demo.username) {
         users[demo.username] = {
@@ -51,7 +52,7 @@ const Storage = {
           username: demo.username,
           displayName: demo.displayName,
           email: demo.email,
-          password: demo.password,
+          password: demo.password, // migrated to passwordHash on first login
           isAdmin: false,
           createdAt: new Date().toISOString(),
           settings: {}
@@ -155,7 +156,7 @@ const Storage = {
       username: username,
       displayName: userData.displayName,
       email: userData.email || '',
-      password: userData.password,
+      passwordHash: userData.passwordHash, // set by Auth.signup after hashing
       isAdmin: userData.isAdmin || isFirstUser,  // First user = admin
       createdAt: new Date().toISOString(),
       settings: {}
@@ -308,10 +309,19 @@ const Storage = {
   // ==================== EXPORT/IMPORT ====================
 
   exportData() {
+    // Strip all password fields from exported user records.
+    // Backup files must never contain passwords or hashes.
+    const rawUsers = this.getAll(this.KEYS.USERS);
+    const safeUsers = {};
+    Object.entries(rawUsers).forEach(([k, u]) => {
+      safeUsers[k] = (typeof PasswordUtils !== 'undefined')
+        ? PasswordUtils.sanitize(u)
+        : (({ password, passwordHash, ...safe }) => safe)(u);
+    });
     return {
       version: APP_CONFIG.version,
       app: APP_CONFIG.name,
-      users: this.getAll(this.KEYS.USERS),
+      users: safeUsers,
       items: this.getAll(this.KEYS.ITEMS),
       settings: this.getAll(this.KEYS.SETTINGS),
       favorites: this.getAll(this.KEYS.FAVORITES),
